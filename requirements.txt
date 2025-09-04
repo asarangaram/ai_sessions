@@ -6,54 +6,196 @@
 #
 --extra-index-url https://www.piwheels.org/simple
 
+aiohappyeyeballs==2.6.1
+    # via aiohttp
+aiohttp==3.12.15
+    # via degirum
+aiosignal==1.4.0
+    # via aiohttp
+annotated-types==0.7.0
+    # via pydantic
+apispec==6.8.2
+    # via flask-smorest
+attrs==25.3.0
+    # via aiohttp
 bidict==0.23.1
     # via python-socketio
 blinker==1.9.0
     # via flask
+certifi==2025.8.3
+    # via requests
+charset-normalizer==3.4.3
+    # via requests
 click==8.2.1
     # via flask
+degirum==0.18.2
+    # via ai-session (pyproject.toml)
+deprecation==2.1.0
+    # via lancedb
 dnspython==2.7.0
     # via eventlet
 eventlet==0.40.3
-    # via flask-socketio-chat (pyproject.toml)
+    # via ai-session (pyproject.toml)
 flask==3.1.2
     # via
+    #   ai-session (pyproject.toml)
+    #   flask-smorest
     #   flask-socketio
-    #   flask-socketio-chat (pyproject.toml)
     #   flask-wtf
+flask-smorest==0.46.1
+    # via ai-session (pyproject.toml)
 flask-socketio==5.5.1
-    # via flask-socketio-chat (pyproject.toml)
+    # via ai-session (pyproject.toml)
 flask-wtf==1.2.2
-    # via flask-socketio-chat (pyproject.toml)
+    # via ai-session (pyproject.toml)
+frozenlist==1.7.0
+    # via
+    #   aiohttp
+    #   aiosignal
 greenlet==3.2.4
-    # via eventlet
+    # via
+    #   eventlet
+    #   sqlalchemy
 gunicorn==23.0.0
-    # via flask-socketio-chat (pyproject.toml)
+    # via ai-session (pyproject.toml)
 h11==0.16.0
     # via wsproto
+idna==3.10
+    # via
+    #   requests
+    #   yarl
 itsdangerous==2.2.0
     # via
     #   flask
     #   flask-wtf
 jinja2==3.1.6
     # via flask
+lance-namespace==0.0.6
+    # via lancedb
+lance-namespace-urllib3-client==0.0.14
+    # via lance-namespace
+lancedb==0.25.0
+    # via ai-session (pyproject.toml)
 markupsafe==3.0.2
     # via
     #   flask
     #   jinja2
     #   werkzeug
     #   wtforms
+marshmallow==4.0.1
+    # via
+    #   apispec
+    #   flask-smorest
+    #   webargs
+msgpack==1.1.1
+    # via
+    #   degirum
+    #   msgpack-numpy
+msgpack-numpy==0.4.7.1
+    # via degirum
+multidict==6.6.4
+    # via
+    #   aiohttp
+    #   yarl
+numpy==1.26.4
+    # via
+    #   degirum
+    #   lancedb
+    #   msgpack-numpy
+    #   opencv-python
+    #   pylance
+opencv-python==4.11.0.86
+    # via degirum
+overrides==7.7.0
+    # via lancedb
 packaging==25.0
-    # via gunicorn
+    # via
+    #   apispec
+    #   deprecation
+    #   gunicorn
+    #   lancedb
+    #   webargs
+pillow==10.4.0
+    # via degirum
+propcache==0.3.2
+    # via
+    #   aiohttp
+    #   yarl
+psutil==7.0.0
+    # via degirum
+pyarrow==21.0.0
+    # via
+    #   lance-namespace
+    #   lancedb
+    #   pylance
+pydantic==2.11.7
+    # via
+    #   lance-namespace-urllib3-client
+    #   lancedb
+pydantic-core==2.33.2
+    # via pydantic
+pylance==0.35.0
+    # via lance-namespace
+pyseccomp==0.1.2
+    # via degirum
+python-dateutil==2.9.0.post0
+    # via lance-namespace-urllib3-client
 python-engineio==4.12.2
     # via python-socketio
 python-socketio==5.13.0
-    # via flask-socketio
+    # via
+    #   degirum
+    #   flask-socketio
+pyyaml==6.0.2
+    # via degirum
+pyzmq==27.0.2
+    # via degirum
+requests==2.32.5
+    # via
+    #   degirum
+    #   python-socketio
 simple-websocket==1.1.0
     # via python-engineio
+six==1.17.0
+    # via python-dateutil
+sqlalchemy==2.0.43
+    # via ai-session (pyproject.toml)
+tqdm==4.67.1
+    # via lancedb
+types-pyyaml==6.0.12.20250822
+    # via degirum
+types-requests==2.32.4.20250809
+    # via degirum
+typing-extensions==4.15.0
+    # via
+    #   aiosignal
+    #   degirum
+    #   lance-namespace
+    #   lance-namespace-urllib3-client
+    #   pydantic
+    #   pydantic-core
+    #   sqlalchemy
+    #   typing-inspection
+typing-inspection==0.4.1
+    # via pydantic
+urllib3==2.5.0
+    # via
+    #   lance-namespace-urllib3-client
+    #   requests
+    #   types-requests
+webargs==8.7.0
+    # via flask-smorest
+websocket-client==1.8.0
+    # via
+    #   degirum
+    #   python-socketio
 werkzeug==3.1.3
-    # via flask
+    # via
+    #   flask
+    #   flask-smorest
 wsproto==1.2.0
     # via simple-websocket
 wtforms==3.2.1
     # via flask-wtf
+yarl==1.20.1
+    # via aiohttp
