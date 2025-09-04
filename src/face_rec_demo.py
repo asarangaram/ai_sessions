@@ -1,4 +1,5 @@
 import argparse
+import json
 from pathlib import Path
 import logging
 
@@ -59,5 +60,6 @@ if __name__ == "__main__":
                 logger.warning("Some images were skipped as there is no face in main faces in a single image ")
     if args.recognize:
         for path in args.recognize:
-            recogniser.recognize_faces(path)
+            result = recogniser.recognize_faces(path)
+            print(json.dumps(result, indent=4))
         

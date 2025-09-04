@@ -76,5 +76,13 @@ def faces_db(db, dbModel):
             except SQLAlchemyError as e:
                 session.rollback()
                 raise ValueError(f"Failed to delete face: {str(e)}")
+        
+        def to_json(self):
+            return {
+                "person_id": self.person_id,
+                "path": self.path,
+                "person": self.person.to_json()
+            }
+             
 
     return RegisteredFaceInDB

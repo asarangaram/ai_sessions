@@ -307,14 +307,29 @@ class FaceRecognizer:
         num_faces = len(detected_faces.results)
         print(f"{num_faces} faces found")
         embedding_model = EmbeddingModel()
+        face_matches = []
         if detected_faces.results:
             for face in detected_faces.results:
                 landmarks = [landmark["landmark"] for landmark in face["landmarks"]]
                 aligned_face, _ = align_and_crop(detected_faces.image, landmarks)
                 face_embedding = embedding_model.extract_face_embedding(aligned_face)
-                print(type(face_embedding))
                 matches = self.faceVectorStore.vector_search(face_embedding, count=2)
-                print(matches)
+                faces = []
+                for match in matches:
+                    id = match[0]
+                    confidence = match[1]
+                    face = self.RegisteredFace.get_face(id)
+                    print(face)
+                    face.confidence = confidence
+                    faces.append(face.to_json())
+                face_matches.append(faces)
+                
+        return {
+            "num_faces": num_faces,
+            # "detection_output": detected_faces.results,
+            "face_matches": face_matches
+        }
+                
 
     def detect_and_align_faces(
         self, path: str

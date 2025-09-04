@@ -42,23 +42,24 @@ class FaceVectorStore:
         metric_type: str = "cosine",
         count: int = 1,
     ) -> list[str, float]:
+        if self.tbl.count_rows() > 0:
+            threshold = 0.3
+            faces_found = (
+                self.tbl.search(vector, vector_column_name="vector")
+                .metric(metric_type)
+                .limit(count)
+                .to_list()
+            )
+            result = []
 
-        threshold = 0.3
-        faces_found = (
-            self.tbl.search(vector, vector_column_name="vector")
-            .metric(metric_type)
-            .limit(count)
-            .to_list()
-        )
-        result = []
+            for face_found in faces_found:
+                similarity_score = round(1 - face_found["_distance"], 2)
+                if similarity_score >= threshold:
+                    identity = face_found["id"]
+                    result.append((identity, similarity_score))
 
-        for face_found in faces_found:
-            similarity_score = round(1 - face_found["_distance"], 2)
-            if similarity_score >= threshold:
-                identity = face_found["id"]
-                result.append((identity, similarity_score))
-
-        return result
+            return result
+        return []
 
 
 if __name__ == "__main__":
