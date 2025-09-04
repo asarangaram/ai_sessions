@@ -1,20 +1,21 @@
 FROM python:3.11-slim
 
+RUN mkdir /data
 COPY ./ /app
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    python3-dev \
-    libffi-dev \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && apt-get install -y \
+#    build-essential \
+#    python3-dev \
+#    libffi-dev \
+#    libssl-dev \
+#    && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip
-RUN pip install pip-tools
+RUN pip install --upgrade pip  --root-user-action=ignore
+RUN pip install pip-tools  --root-user-action=ignore
 RUN pip-compile --strip-extras ./pyproject.toml    
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt --root-user-action=ignore
 
 EXPOSE 5000
 

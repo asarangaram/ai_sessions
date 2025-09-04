@@ -6,6 +6,7 @@ services:
       - "5002:5002"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /home/anandas/temp/data:/data
     depends_on:
       - web
 
