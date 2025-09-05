@@ -65,7 +65,9 @@ class AISessionManager:
         self._clients = {}
 
     def create_session(self, sid: int):
-        self._clients[sid] = SessionManager(sid)
+        session = SessionManager(sid)
+        self._clients[sid] = session
+        return session
 
     def update_activity(self, sid):
         session = self._clients.get(sid, None)
