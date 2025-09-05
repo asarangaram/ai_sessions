@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import logging
 
-from .face_rec import load
+from .src.face_rec import load
 
 logging.basicConfig(
     level=logging.WARNING,  # global default
