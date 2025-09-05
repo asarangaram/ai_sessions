@@ -2,7 +2,7 @@ from flask import request
 from flask.views import MethodView
 
 from .model import AISessionManager, SessionManager
-from .error_handler import custom_error_handler
+from ..common import custom_error_handler
 
 from marshmallow import Schema, fields
 from flask_smorest.fields import Upload

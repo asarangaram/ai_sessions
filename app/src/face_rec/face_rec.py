@@ -321,7 +321,7 @@ class FaceRecognizer:
             )  # Align and crop face
             aligned_faces.append(
                 DetectedFace(
-                    bbox=(x1, y1, x2, y2), landmarks=landmarks, image=aligned_face.tobytes()
+                    bbox=(x1, y1, x2, y2), landmarks=landmarks
                 )
             )
         return aligned_faces

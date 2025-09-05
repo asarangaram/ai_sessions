@@ -4,8 +4,7 @@ import time
 from werkzeug.utils import secure_filename
 from pathlib import Path
 
-from .config import ConfigClass
-from .temp_file import TempFile
+from ..common import ConfigClass, TempFile
 
 
 class SessionManager:

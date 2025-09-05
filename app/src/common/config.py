@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from dotenv import dotenv_values
 
-env_file = '../venv/.env'
+env_file = '../env/.env'
 # Inside docker,  if relative path doesn't work
 # This won't work on regular run 
 if not os.path.exists(env_file):  
@@ -22,6 +22,5 @@ def get_required_env_variable(var_name):
 
 class ConfigClass(object):
     UPLOAD_STORAGE_LOCATION = get_required_env_variable("UPLOAD_STORAGE_LOCATION")
-    if not UPLOAD_STORAGE_LOCATION:
-        UPLOAD_STORAGE_LOCATION =  '/data' 
-    
+    APP_SECRET = get_required_env_variable('APP_SECRET')
+    APP_NAME = get_required_env_variable('APP_NAME')    
