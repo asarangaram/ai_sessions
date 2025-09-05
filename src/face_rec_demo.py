@@ -61,5 +61,5 @@ if __name__ == "__main__":
     if args.recognize:
         for path in args.recognize:
             result = recogniser.recognize_faces(path)
-            print(json.dumps(result, indent=4))
+            print(json.dumps(result, indent=2))
         

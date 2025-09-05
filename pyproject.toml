@@ -10,7 +10,9 @@ dependencies = [
     "flask_smorest",
     "lancedb",
     "sqlalchemy",
-    "degirum"
+    "degirum",
+    'marshmallow',
+    'dotenv',
 ]
 
 [project.optional-dependencies]

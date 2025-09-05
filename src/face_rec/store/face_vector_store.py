@@ -1,6 +1,7 @@
 import uuid
 from lancedb.pydantic import LanceModel, Vector
 import lancedb
+import numpy as np
 
 
 class FaceRecognitionSchema(LanceModel):
@@ -12,7 +13,11 @@ class FaceVectorStore:
     def __init__(self, db, table_name: str):
         # Initialize the table
         if table_name not in db.table_names():
-            tbl = db.create_table(table_name, schema=FaceRecognitionSchema)
+            tbl = db.create_table(
+                table_name,
+                schema=FaceRecognitionSchema,
+                data=[{"id": "rand_0", "vector": np.random.rand(512).astype(np.float32)}],
+            )
 
         else:
             tbl = db.open_table(table_name)
@@ -42,24 +47,22 @@ class FaceVectorStore:
         metric_type: str = "cosine",
         count: int = 1,
     ) -> list[str, float]:
-        if self.tbl.count_rows() > 0:
-            threshold = 0.3
-            faces_found = (
-                self.tbl.search(vector, vector_column_name="vector")
-                .metric(metric_type)
-                .limit(count)
-                .to_list()
-            )
-            result = []
+        threshold = 0.3
+        faces_found = (
+            self.tbl.search(vector, vector_column_name="vector")
+            .metric(metric_type)
+            .limit(count)
+            .to_list()
+        )
+        result = []
 
-            for face_found in faces_found:
-                similarity_score = round(1 - face_found["_distance"], 2)
-                if similarity_score >= threshold:
-                    identity = face_found["id"]
-                    result.append((identity, similarity_score))
+        for face_found in faces_found:
+            similarity_score = round(1 - face_found["_distance"], 2)
+            if similarity_score >= threshold:
+                identity = face_found["id"]
+                result.append((identity, similarity_score))
 
-            return result
-        return []
+        return result
 
 
 if __name__ == "__main__":
@@ -165,8 +168,10 @@ if __name__ == "__main__":
 
     logging.warning("API: vector_search ")
 
-    candidates = {"/home/anandas/demos/degirum_hailo_examples/assets/Friends.jpg": 6,
-                  "/home/anandas/demos/degirum_hailo_examples/assets/Friends1.jpg": 3}
+    candidates = {
+        "/home/anandas/demos/degirum_hailo_examples/assets/Friends.jpg": 6,
+        "/home/anandas/demos/degirum_hailo_examples/assets/Friends1.jpg": 3,
+    }
 
     for path, face_count in candidates.items():
         detector = DetectionModel()

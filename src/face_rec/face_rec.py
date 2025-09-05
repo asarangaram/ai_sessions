@@ -301,41 +301,15 @@ class FaceRecognizer:
         return RegisteredFace(id=f.id, person_id=person.id, person_name=person.name)
 
     def recognize_faces(self, path: str) -> List[Face]:
-        detector = DetectionModel()
-        detected_faces = detector.scan(path=path)
-
-        num_faces = len(detected_faces.results)
-        print(f"{num_faces} faces found")
-        embedding_model = EmbeddingModel()
-        face_matches = []
-        if detected_faces.results:
-            for face in detected_faces.results:
-                landmarks = [landmark["landmark"] for landmark in face["landmarks"]]
-                aligned_face, _ = align_and_crop(detected_faces.image, landmarks)
-                face_embedding = embedding_model.extract_face_embedding(aligned_face)
-                matches = self.faceVectorStore.vector_search(face_embedding, count=2)
-                faces = []
-                for match in matches:
-                    id = match[0]
-                    confidence = match[1]
-                    face = self.RegisteredFace.get_face(id)
-                    print(face)
-                    face.confidence = confidence
-                    faces.append(face.to_json())
-                face_matches.append(faces)
-                
-        return {
-            "num_faces": num_faces,
-            # "detection_output": detected_faces.results,
-            "face_matches": face_matches
-        }
-                
+        aligned_faces = self.detect_and_align_faces(path=path)
+        faces_only = [entry.model_dump() for entry in aligned_faces]
+        return faces_only
 
     def detect_and_align_faces(
         self, path: str
     ) -> List[Tuple[np.array, list, DetectedFace]]:
         detector = DetectionModel()
-        detected_faces = detector.detectFaces(path=path)
+        detected_faces = detector.scan(path=path)
 
         aligned_faces = []
         for face in detected_faces.results:
@@ -346,6 +320,8 @@ class FaceRecognizer:
                 detected_faces.image, landmarks
             )  # Align and crop face
             aligned_faces.append(
-                (aligned_face, landmarks, DetectedFace(bbox=(x1, y1, x2, y2)))
+                DetectedFace(
+                    bbox=(x1, y1, x2, y2), landmarks=landmarks, image=aligned_face.tobytes()
+                )
             )
         return aligned_faces
