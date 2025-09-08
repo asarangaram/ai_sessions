@@ -73,7 +73,7 @@ generate_unique_name() {
     # --- Combine them into a human-readable unique name ---
     UNIQUE_NAME="${MACHINE_HOSTNAME}-${LAST_BYTE}"
 
-    echo UNIQUE_NAME $UNIQUE_NAME
+    echo $UNIQUE_NAME
    
 }
 IDENTIFIER_BASE=$(generate_unique_name)
