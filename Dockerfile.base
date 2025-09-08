@@ -3,6 +3,12 @@ FROM python:3.11-slim AS base
 # Create base dirs
 RUN mkdir -p /base /app /env /data
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
 # Keep pyproject.toml & requirements inside base image
 WORKDIR /base
 COPY pyproject.toml /base/

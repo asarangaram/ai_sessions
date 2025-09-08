@@ -5,15 +5,14 @@
 # If a service is healthy (HTTP 200), it uses 'cl_avahi_manager.sh' to start its
 # Avahi broadcast. If the service is down, it stops the broadcast.
 
-export IDENTIFIER_BASE="${IDENTIFIER_BASE}"
-echo "IDENTIFIER_BASE $IDENTIFIER_BASE"
+
 
 # --- Help function to display usage information ---
 show_help() {
   echo "Usage: $0 [service_prefix@port] ..."
   echo
   echo "This script monitors HTTP services and manages Avahi mDNS broadcasting."
-  echo "It requires 'cl_avahi_manager.sh' to be in the same directory."
+  echo "It requires '/usr/local/bin/cl_avahi_manager.sh'."
   echo
   echo "Arguments:"
   echo "  service_prefix@port   One or more services to monitor, in the format 'name@port'."
@@ -50,12 +49,36 @@ fi
 # --- Check for dependencies ---
 command -v curl >/dev/null 2>&1 || { echo >&2 "Error: 'curl' is not installed. Aborting."; exit 1; }
 command -v ip >/dev/null 2>&1 || { echo >&2 "Error: 'ip' command not found. Aborting."; exit 1; }
-command -v cl_avahi_manager.sh >/dev/null 2>&1 || { echo >&2 "Error: 'ip' command not found. Aborting."; exit 1; }
+command -v /usr/local/bin/cl_avahi_manager.sh >/dev/null 2>&1 || { echo >&2 "Error: 'cl_avahi_manager' command not found. Aborting."; exit 1; }
 
 # --- Get the local IP address dynamically ---
 get_local_ip() {
     ip route get 1.1.1.1 2>/dev/null | awk '{print $7}'
 }
+generate_unique_name() {
+    # --- Get the last byte of the IP address ---
+    IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7}')
+
+    if [ -n "$IP" ]; then
+        LAST_BYTE=$(echo "$IP" | cut -d'.' -f4)
+    else
+        # Ensure this never executed by confirming ip before
+        # Fallback to a random number if no IP is found
+        LAST_BYTE=$((RANDOM % 256))
+    fi
+
+    # --- Get the machine's hostname ---
+    MACHINE_HOSTNAME=$(hostname)
+
+    # --- Combine them into a human-readable unique name ---
+    UNIQUE_NAME="${MACHINE_HOSTNAME}-${LAST_BYTE}"
+
+    echo UNIQUE_NAME $UNIQUE_NAME
+   
+}
+IDENTIFIER_BASE=$(generate_unique_name)
+export IDENTIFIER_BASE=$(generate_unique_name)
+echo IDENTIFIER_BASE $IDENTIFIER_BASE
 
 # --- Declare an associative array to track service states (requires Bash 4.0+) ---
 declare -A service_states
@@ -63,12 +86,13 @@ declare -A service_states
 # --- Cleanup function to run on Ctrl+C (SIGINT) ---
 cleanup() {
     echo -e "\nCaught Ctrl+C. Stopping all tracked services..."
+    
     # Iterate through all provided service arguments
     for service_arg in "$@"; do
         # Extract the service prefix
         service_prefix=$(echo "$service_arg" | cut -d'@' -f1 | sed 's/^-//')
         if [ -n "$service_prefix" ]; then
-            cl_avahi_manager.sh -stop "$service_prefix"
+            /usr/local/bin/cl_avahi_manager.sh -stop "$service_prefix"
         fi
     done
 
@@ -88,7 +112,9 @@ while true; do
       sleep 1
       continue
     fi
+
    
+    
     # Iterate through all provided service arguments
     for service_arg in "$@"; do
         # Extract the service prefix and port
@@ -112,10 +138,10 @@ while true; do
         if [ "${service_states[$service_prefix]}" != "$current_state" ]; then
             if [ "$current_state" == "up" ]; then
                 echo "State change: '$service_prefix' is now UP. Starting Avahi broadcast..."
-                cl_avahi_manager.sh -start "${service_prefix}@${port}"
+                /usr/local/bin/cl_avahi_manager.sh -start "${service_prefix}@${port}"
             else
                 echo "State change: '$service_prefix' is now DOWN. Stopping Avahi broadcast..."
-                cl_avahi_manager.sh -stop "$service_prefix"
+                /usr/local/bin/cl_avahi_manager.sh -stop "$service_prefix"
             fi
             # Update the state to the current status
             service_states["$service_prefix"]="$current_state"

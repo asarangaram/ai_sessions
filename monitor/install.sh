@@ -33,7 +33,6 @@ chmod +x "$SYSTEM_SCRIPT_DIR/cl_monitor.sh"
 
 # --- Create the systemd service file ---
 echo "Creating systemd service file at $SYSTEMD_SERVICE_DIR/$SERVICE_NAME..."
-IDENTIFIER_BASE="server100@cloudonlapapps"
 
 # Use a here document to write the service file
 cat > "$SYSTEMD_SERVICE_DIR/$SERVICE_NAME" << EOF
@@ -42,8 +41,6 @@ Description=Cloud on Lap Service Monitor
 After=network-online.target
 
 [Service]
-
-Environment="IDENTIFIER_BASE=$IDENTIFIER_BASE"
 ExecStart=$SYSTEM_SCRIPT_DIR/cl_monitor.sh -repo@5001 -ai@5002
 Restart=always
 User=root
