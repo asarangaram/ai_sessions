@@ -17,8 +17,13 @@ if [ "$#" -eq 0 ]; then
   exit 0
 fi
 
+for arg in "$@"; do
+  if [ "$arg" = "-h" ] || [ "$arg" = "--help" ]; then
+    show_help
+    exit 0
+  fi
+done
 
-# --- Check for root privileges ---
 if [ "$(id -u)" -ne 0 ]; then
   echo "This script must be run with sudo."
   show_help
@@ -26,7 +31,15 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 AVAHI_SERVICE_DIR="/etc/avahi/services"
-IDENTIFIER_BASE="server100@cloudonlapapps"
+
+
+
+
+if [ -z "$IDENTIFIER_BASE" ]; then
+  echo "Error: IDENTIFIER_BASE is not set. Aborting." >&2
+  exit 1
+fi
+
 
 start_service() {
   local service_prefix="$1"
