@@ -1,27 +1,42 @@
 #!/bin/bash
 
+show_help() {
+  echo "Usage: sudo $0 [-start service@port] [-stop service@port]"
+  echo
+  echo "This script manages Avahi mDNS services."
+  echo
+  echo "Options:"
+  echo "  -start service@port   Start a new Avahi service with the specified name and port."
+  echo "  -stop service@port    Stop and remove an existing Avahi service."
+  echo
+  echo "Example:"
+  echo "  sudo $0 -start my_app@8080 -stop old_app@9090"
+}
+if [ "$#" -eq 0 ]; then
+  show_help
+  exit 0
+fi
+
+
 # --- Check for root privileges ---
 if [ "$(id -u)" -ne 0 ]; then
   echo "This script must be run with sudo."
+  show_help
   exit 1
 fi
 
-# --- Define constants and file paths ---
 AVAHI_SERVICE_DIR="/etc/avahi/services"
 IDENTIFIER_BASE="server100@cloudonlapapps"
 
-# --- Function to start a service ---
 start_service() {
   local service_prefix="$1"
   local port="$2"
-
   
   local service_file_name="cl_avahi_$service_prefix.service"
   local capitalized_prefix="${service_prefix^}"
   local  service_name="CL $capitalized_prefix Service"
   local identifier="$service_prefix.$IDENTIFIER_BASE"
 
-  # Ensure the port is a valid number
   if ! [[ "$port" =~ ^[0-9]+$ ]]; then
     echo "Error: Invalid port number '$port'. Skipping."
     return 1
@@ -60,7 +75,14 @@ stop_service() {
   echo "Service file "$AVAHI_SERVICE_DIR/$service_file_name" removed."
 }
 
-# --- Main logic using a while loop ---
+# Check for -h or --help in any position and exit immediately
+for arg in "$@"; do
+  if [ "$arg" = "-h" ] || [ "$arg" = "--help" ]; then
+    show_help
+    exit 0
+  fi
+done
+
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
     -start)
@@ -69,11 +91,10 @@ while [[ "$#" -gt 0 ]]; do
         shift
         continue
       fi
-      # Parse the argument to get the service prefix and port
       service_prefix=$(echo "$2" | cut -d'@' -f1)
       port=$(echo "$2" | cut -d'@' -f2)
       start_service "$service_prefix" "$port"
-      shift 2 # Shift twice to consume -start and the argument
+      shift 2 
       ;;
     -stop)
       if [ -z "$2" ]; then
@@ -84,8 +105,13 @@ while [[ "$#" -gt 0 ]]; do
       service_prefix=$(echo "$2" | cut -d'@' -f1)
       port=$(echo "$2" | cut -d'@' -f2)
       stop_service "$service_prefix" "$port"
-      shift 2 # Shift twice to consume -stop and the argument
+      shift 2 
       ;;
+    -h|--help)
+      show_help
+      exit 0
+      ;;
+
     *)
       echo "Invalid argument: $1. Skipping."
       shift # Consume the invalid argument
