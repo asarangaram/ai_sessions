@@ -73,11 +73,11 @@ generate_unique_name() {
     # --- Combine them into a human-readable unique name ---
     UNIQUE_NAME="${MACHINE_HOSTNAME}-${LAST_BYTE}"
 
-    echo $UNIQUE_NAME
+    echo "${UNIQUE_NAME}@cloudonlanapps"
    
 }
 IDENTIFIER_BASE=$(generate_unique_name)
-export IDENTIFIER_BASE=$(generate_unique_name)
+export IDENTIFIER_BASE
 echo IDENTIFIER_BASE $IDENTIFIER_BASE
 
 # --- Declare an associative array to track service states (requires Bash 4.0+) ---
