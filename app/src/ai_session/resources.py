@@ -1,7 +1,7 @@
 from flask import request
 from flask.views import MethodView
 
-from .model import AISessionManager, SessionManager
+from .model import AISessionManager, SessionState
 from ..common import custom_error_handler
 
 from marshmallow import Schema, fields
@@ -25,7 +25,7 @@ def register_sessions_resources(*, bp: Blueprint, model: AISessionManager):
         @custom_error_handler
         @bp.response(201, UploadResponseSchema)
         def post(self, session_id):
-            session: SessionManager = model.get_session(session_id)
+            session: SessionState = model.get_session(session_id)
             files = UploadFileSchema().load(request.files)
             result = session.upload_file(files.get("media"))
             return result

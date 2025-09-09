@@ -1,4 +1,4 @@
-from socket import SocketIO
+from flask_socketio import SocketIO
 from flask import request, session
 import logging
 import eventlet
@@ -16,31 +16,17 @@ def register_ai_session_events(*, socket: SocketIO, model: AISessionManager):
         model.create_session(sid)
         logging.info(f"Client connected: {sid}")
 
-    @socket.on("message")
-    def handle_message(msg):
-        print(session)
-        sid = request.sid
-        model.update_activity(sid)
-        logging.info(f"Received from {sid}: {msg}")
-
-        if msg == "process":
-            socket.start_background_task(target=process_task, sid=sid)
-
     @socket.on("recognize")
     def handle_message(msg):
         print(session)
         sid = request.sid
         model.update_activity(sid)
-        logging.info(f"New Request: Recognize {msg}")
-
-        if msg == "process":
-            socket.start_background_task(target=process_task, sid=sid)
-
-    def process_task(sid):
-        for i in range(1, 11):
-            socket.emit("message", {"msg": f"Tick {i}"}, to=sid)
-            eventlet.sleep(1)
-        socket.emit("message", {"msg": "done"}, to=sid)
+        logging.info(f"Recognize {msg}: received")
+        if model.recognize(sid=sid, identifier=msg):
+            logging.info(f"Recognize {msg}: succeeded")
+        else:
+            logging.info(f"Recognize {msg}: failed")
+            
 
     @socket.on("disconnect")
     def handle_disconnect():

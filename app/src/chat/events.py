@@ -1,6 +1,6 @@
 from flask import session
 from flask_socketio import emit, join_room, leave_room
-from socket import SocketIO
+from flask_socketio import SocketIO
 
 
 def register_chat_events(socketio: SocketIO,  app=None):

@@ -1,13 +1,17 @@
 import os
 import shutil
+import threading
 import time
+import eventlet
 from werkzeug.utils import secure_filename
 from pathlib import Path
+from flask_socketio import emit
 
 from ..common import ConfigClass, TempFile
+from ..face_rec import load, FaceRecognizer
 
 
-class SessionManager:
+class SessionState:
     def __init__(self, sid):
         self.sid = sid
         self.last_active = time.time()
@@ -54,17 +58,37 @@ class SessionManager:
         if temp_file:
             temp_file.remove()
         return result
+    
+    def recognize(self, recogniser:FaceRecognizer, identifier:str):
+        self.emit_progress(f"Acquired hardware")
+        eventlet.sleep(1)
+        self.emit_progress(f"faces detected")
+        eventlet.sleep(1)
+        with self.resource_lock:
+            self.is_hw_in_use = False
+        self.emit_result({"status": "success", "result": {"faces": 5}})
+        return True
+    
+    def emit_progress(self, msg:str):
+        emit("progress", msg, to=self.sid)
+
+    def emit_result(self, result:str):
+        emit("result", result, to=self.sid)
+    
+
 
 
 class AISessionManager:
     NO_ACTIVITY_TIMEOUT = 60 * 60  # seconds
 
     def __init__(self):
-        # {sid: last_activity_timestamp}
+        self.recogniser = load(ConfigClass.UPLOAD_STORAGE_LOCATION, preserve_past=True)
+        self.is_hw_in_use = False
+        self.resource_lock = threading.Lock()
         self._clients = {}
 
     def create_session(self, sid: int):
-        session = SessionManager(sid)
+        session = SessionState(sid)
         self._clients[sid] = session
         return session
 
@@ -88,9 +112,28 @@ class AISessionManager:
             if session.is_expired(timeout_seconds)
         ]
 
-    def get_session(self, sid: int) -> SessionManager:
+    def get_session(self, sid: int) -> SessionState:
         session = self._clients.get(sid, None)
         if session:
             return session
         else:
             raise Exception(f"Session {sid} doesn't exists, reconnect")
+        
+    def recognize(self, sid, identifier) -> bool:
+        session:SessionState = self._clients.get(sid, None)
+        if not session:
+            raise Exception(f"Session {sid} doesn't exists, reconnect")
+        session.emit_progress(f"Received Face Recognition request for {identifier}")
+        with self.resource_lock:
+            if self.is_hw_in_use:
+                session.emit_result({"status": "failed", "error": f"Resource is busy"})
+                return False
+            self.is_hw_in_use = True
+
+        return session.recognize(self.recogniser, identifier)
+
+
+
+        
+                
+
