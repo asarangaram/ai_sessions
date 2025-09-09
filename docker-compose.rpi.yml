@@ -1,0 +1,4 @@
+services:
+  web:
+    volumes:
+      - /proc/cpuinfo:/proc/cpuinfo:ro

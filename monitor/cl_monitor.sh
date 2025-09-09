@@ -76,7 +76,41 @@ generate_unique_name() {
     echo "${UNIQUE_NAME}@cloudonlanapps"
    
 }
-IDENTIFIER_BASE=$(generate_unique_name)
+get_device_id() {
+  local hostname=$(hostname)
+  
+  # 1. Try to get the Raspberry Pi CPU serial number
+  if [ -f "/proc/cpuinfo" ]; then
+    SERIAL=$(grep "Serial" "/proc/cpuinfo" | awk -F': ' '{print $2}')
+    if [ ! -z "$SERIAL" ]; then
+      # Use the last 8 digits of the serial number
+      echo "${hostname}-hw-${SERIAL: -8}"
+      exit 0
+    fi
+  fi
+
+  # 2. Try to get the Linux machine-id
+  if [ -f "/etc/machine-id" ]; then
+    MACHINE_ID=$(cat "/etc/machine-id")
+    # Hash the machine-id and take the first 8 characters
+    HASH=$(echo -n "$MACHINE_ID" | sha256sum | awk '{print $1}')
+    echo "${hostname}-mid-${HASH:0:8}"
+    exit 0
+  fi
+  
+  # 3. Try to get the macOS UUID
+  if [ -f "/private/var/db/uuidtext/uuid" ]; then
+    UUID=$(cat "/private/var/db/uuidtext/uuid")
+    echo "${hostname}--uuid-${UUID}"
+    exit 0
+  fi
+  
+  # If all checks fail, print an error and exit with a non-zero status
+  echo "Error: Could not find a unique device ID from any known location." >&2
+  exit 1
+}
+
+IDENTIFIER_BASE="$(get_device_id)@cloudonlanapps"
 export IDENTIFIER_BASE
 echo IDENTIFIER_BASE $IDENTIFIER_BASE
 
