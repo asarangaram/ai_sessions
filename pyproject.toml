@@ -13,7 +13,6 @@ dependencies = [
     "degirum",
     'marshmallow',
     'dotenv',
-    'netifaces',
 ]
 
 [project.optional-dependencies]

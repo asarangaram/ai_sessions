@@ -1,4 +1,4 @@
 from src import application, socketio
 
 if __name__ == "__main__":
-    socketio.run(application, host="0.0.0.0", port=5003)
+    socketio.run(application, host="0.0.0.0", port=5002)

@@ -61,13 +61,15 @@ class SessionState:
     
     def recognize(self, recogniser:FaceRecognizer, identifier:str):
         self.emit_progress(f"Acquired hardware")
-        eventlet.sleep(1)
+        file_path = self.session_path / identifier
+
+        if not os.path.exists(file_path):
+            return False, f"file {identifier} doesn't exists"
+
+        result = recogniser.recognize_faces(str(file_path))
         self.emit_progress(f"faces detected")
-        eventlet.sleep(1)
-        with self.resource_lock:
-            self.is_hw_in_use = False
-        self.emit_result({"status": "success", "result": {"faces": 5}})
-        return True
+        
+        return result, None
     
     def emit_progress(self, msg:str):
         emit("progress", msg, to=self.sid)
@@ -130,7 +132,13 @@ class AISessionManager:
                 return False
             self.is_hw_in_use = True
 
-        return session.recognize(self.recogniser, identifier)
+        result, error = session.recognize(self.recogniser, identifier)
+        with self.resource_lock:
+            self.is_hw_in_use = False
+        if result:
+            session.emit_result({"status": "success", "result": result})
+        else:
+            session.emit_result({"status": "failed", "error": error})
 
 
 
