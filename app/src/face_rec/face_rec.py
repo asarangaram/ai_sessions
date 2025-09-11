@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import cv2
 from loguru import logger
@@ -296,26 +296,33 @@ class FaceRecognizer:
         f = current.update(person_id=new_person_id)
         return RegisteredFace(id=f.id, person_id=person.id, person_name=person.name)
 
-    def recognize_faces(self, path: str) -> List[Face]:
-        aligned_faces = self.detect_and_align_faces(path=path)
+    def recognize_faces(
+        self, path: str, on_get_face_identity: Callable[[int], Tuple[str, str]]
+    ) -> List[Face]:
+        aligned_faces = self.detect_and_align_faces(
+            path=path, on_get_face_identity=on_get_face_identity
+        )
         faces_only = [entry.model_dump() for entry in aligned_faces]
         return faces_only
 
     def detect_and_align_faces(
-        self, path: str
+        self, path: str, on_get_face_identity: Callable[[int], Tuple[str, str]]
     ) -> List[Tuple[np.array, list, DetectedFace]]:
         detector = DetectionModel()
         detected_faces = detector.scan(path=path)
 
         aligned_faces = []
-        for face in detected_faces.results:
+        for index, face in enumerate(detected_faces.results):
             x1, y1, x2, y2 = map(int, face["bbox"])
-            cropped_face = detected_faces.image[y1:y2, x1:x2]
+            # cropped_face = detected_faces.image[y1:y2, x1:x2]
             landmarks = [landmark["landmark"] for landmark in face["landmarks"]]
-            aligned_face, _ = align_and_crop(
-                detected_faces.image, landmarks
-            )  # Align and crop face
+            aligned_face, _ = align_and_crop(detected_faces.image, landmarks)
+            save_path, identifier = on_get_face_identity(index)
+            cv2.imwrite(str(save_path), aligned_face)
             aligned_faces.append(
-                DetectedFace(bbox=(x1, y1, x2, y2), landmarks=landmarks)
+                DetectedFace(
+                    bbox=(x1, y1, x2, y2), landmarks=landmarks, image=identifier
+                )
             )
+            logger.info(f"face {index} is saved with identity {identifier}")
         return aligned_faces

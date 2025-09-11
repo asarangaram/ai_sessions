@@ -22,13 +22,6 @@ class SessionState:
         if not os.path.exists(self.session_path):
             os.makedirs(self.session_path)
 
-    @property
-    def uploaded_img_path(self):
-        path = self.session_path / "uploaded"
-        if not path.exists():
-            path.mkdir(exist_ok=True)
-        return path
-
     def update(self):
         self.last_active = time.time()
 
@@ -49,13 +42,27 @@ class SessionState:
             ]
         )
 
-    def upload_file(self, uploaded_file):
+    @property
+    def uploaded_images_path(self):
+        path = self.session_path / "uploaded"
+        if not path.exists():
+            path.mkdir(exist_ok=True)
+        return path
+
+    @property
+    def generated_faces_path(self):
+        path = self.session_path / "faces"
+        if not path.exists():
+            path.mkdir(exist_ok=True)
+        return path
+
+    def save_uploaded_image(self, uploaded_file):
         temp_file = TempFile(uploaded_file)
         metadata = temp_file.metadata()
         md5 = metadata.get("md5")
         _, ext = uploaded_file.filename.split(".", 1)
         unique_name = md5 + "." + ext
-        file_path = self.uploaded_img_path / unique_name
+        file_path = self.uploaded_images_path / unique_name
         result = {"file_identifier": unique_name, **metadata}
         if file_path.exists():
             result["status"] = "duplicate"
@@ -66,6 +73,11 @@ class SessionState:
             temp_file.remove()
         return result
 
+    def get_file_path(self, image_identity, index):
+        file_path = self.generated_faces_path / f"{image_identity}_{index}.png"
+        identifier = f"{image_identity}_{index}.png"
+        return file_path, identifier
+
     def get_image_dimensions(self, image_path):
         try:
             with Image.open(image_path) as img:
@@ -75,13 +87,17 @@ class SessionState:
 
     def recognize(self, recogniser: FaceRecognizer, identifier: str):
         self.emit_progress(f"Acquired hardware")
-        file_path = self.uploaded_img_path / identifier
+        file_path = self.uploaded_images_path / identifier
 
         if not os.path.exists(file_path):
             return False, f"file {identifier} doesn't exists"
         size = self.get_image_dimensions(file_path)
 
-        result = recogniser.recognize_faces(str(file_path))
+        callback = lambda index: self.get_file_path(identifier, index)
+
+        result = recogniser.recognize_faces(
+            str(file_path), on_get_face_identity=callback
+        )
 
         self.emit_progress(f"faces detected")
 

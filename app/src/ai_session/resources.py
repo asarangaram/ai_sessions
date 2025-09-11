@@ -28,7 +28,7 @@ def register_sessions_resources(*, bp: Blueprint, model: AISessionManager):
                 session: SessionState = model.get_session(session_id)
                 files = UploadFileSchema().load(request.files)
                 uploaded_file = files.get("media")
-                result = session.upload_file(uploaded_file)
+                result = session.save_uploaded_image(uploaded_file)
                 logger.info(f"successfully uploaded {uploaded_file.filename} ")
                 return result
             except Exception as e:

@@ -17,7 +17,7 @@ class Face(BaseModel):
     bbox: Optional[Tuple[float, float, float, float]]
     landmarks: Optional[List[Tuple[float, float]]] = None
     status: str = field(default=RecognitionStatus.UNCHECKED)
-    image: Optional[bytes] = None
+    image: Optional[str] = None
 
     @field_serializer("bbox")
     def serialize_bbox(self, v: Optional[Tuple[float, float, float, float]], _info):
@@ -36,10 +36,6 @@ class Face(BaseModel):
     @field_serializer("status")
     def serialize_status(self, v: RecognitionStatus, _info):
         return v.name
-
-    @field_serializer("image")
-    def serialize_image(self, v: Optional[bytes], _info):
-        return base64.b64encode(v).decode("utf-8") if v else None
 
 
 class DetectedFace(Face):
