@@ -73,10 +73,14 @@ class SessionState:
             temp_file.remove()
         return result
 
-    def get_file_path(self, image_identity, index):
+    def get_face_identity(self, image_identity, index):
         file_path = self.generated_faces_path / f"{image_identity}_{index}.png"
         identifier = f"{image_identity}_{index}.png"
         return file_path, identifier
+
+    def get_face_path(self, identity: str):
+        file_path = self.generated_faces_path / identity
+        return file_path
 
     def get_image_dimensions(self, image_path):
         try:
@@ -93,7 +97,7 @@ class SessionState:
             return False, f"file {identifier} doesn't exists"
         size = self.get_image_dimensions(file_path)
 
-        callback = lambda index: self.get_file_path(identifier, index)
+        callback = lambda index: self.get_face_identity(identifier, index)
 
         result = recogniser.recognize_faces(
             str(file_path), on_get_face_identity=callback
