@@ -1,7 +1,4 @@
 import hashlib
-import logging
-import os
-import socket
 import sys
 
 
@@ -11,7 +8,7 @@ def get_unique_device_id(hostname: str):
     prioritizing Raspberry Pi, then Linux, then macOS.
     Returns the ID if found, otherwise raises an exception.
     """
-    logging.warning(hostname)
+
     # 1. Try to get the Raspberry Pi CPU serial number
     try:
         with open("/proc/cpuinfo", "r") as f:

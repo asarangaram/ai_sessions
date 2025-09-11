@@ -1,16 +1,10 @@
 import argparse
 import json
-import logging
 from pathlib import Path
 
+from loguru import logger
+
 from .src.face_rec import load
-
-logging.basicConfig(
-    level=logging.WARNING,  # global default
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Face Store Initializer")

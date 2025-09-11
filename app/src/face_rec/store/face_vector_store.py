@@ -69,21 +69,17 @@ class FaceVectorStore:
 
 
 if __name__ == "__main__":
-    import logging
     import os
     import shutil
     import sys
     from pathlib import Path
 
+    from loguru import logger
+
     from ..proc.align_and_crop import align_and_crop
     from ..proc.face_detection import DetectionModel, EmbeddingModel
 
-    logging.basicConfig(
-        level=logging.WARNING,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
-
-    logging.info("Quite test LanceDB model")
+    logger.info("Quite test LanceDB model")
     # Database and table setup
     test_db_uri = "./artifacts/face_database_test.vec.db"
     table_name = "face"
@@ -94,9 +90,9 @@ if __name__ == "__main__":
 
     vector_store = FaceVectorStore(db=db, table_name=table_name)
     schema_of_the_table = str(vector_store.tbl.schema)
-    logging.info("Schema of the table")
-    logging.info(vector_store.tbl.schema)
-    logging.info("-" * 5)
+    logger.info("Schema of the table")
+    logger.info(vector_store.tbl.schema)
+    logger.info("-" * 5)
 
     base_path = Path(
         "/home/anandas/demos/degirum_hailo_examples/assets/Friends_dataset"
@@ -111,7 +107,7 @@ if __name__ == "__main__":
         ]
     }
 
-    logging.warning("API: add ")
+    logger.warning("API: add ")
     count = 0
     for path, id in faces.items():
         detector = DetectionModel()
@@ -119,11 +115,11 @@ if __name__ == "__main__":
 
         num_faces = len(detected_faces.results)
         if num_faces > 1:
-            logging.warning(
+            logger.warning(
                 f"Skipped {detected_faces.info} as it contains more than one face ({num_faces} faces detected)."
             )
         elif num_faces == 0:
-            logging.warning(f"Skipped {detected_faces.info} as no faces were detected.")
+            logger.warning(f"Skipped {detected_faces.info} as no faces were detected.")
         else:
             result = detected_faces.results[0]
 
@@ -137,21 +133,21 @@ if __name__ == "__main__":
 
             vector_store.add(id=id, vector=face_embedding)
             if schema_of_the_table != str(vector_store.tbl.schema):
-                logging.warning("Schama changed!!!")
-                logging.warning(vector_store.tbl.schema)
-                logging.warning("-" * 5)
+                logger.warning("Schama changed!!!")
+                logger.warning(vector_store.tbl.schema)
+                logger.warning("-" * 5)
         count = count + 1
-    logging.info(f"Inserted {count} items")
+    logger.info(f"Inserted {count} items")
 
     num_rows = len(vector_store.tbl)
     if num_rows == len(faces.keys()):
-        logging.info(f"add(): vector table created with {num_rows} items")
+        logger.info(f"add(): vector table created with {num_rows} items")
     else:
-        logging.error(
+        logger.error(
             f"not all items got inserted [given: {len(faces.keys())}, inserted: {num_rows}]."
         )
 
-    logging.warning("API: search ")
+    logger.warning("API: search ")
     keys = list(faces.keys())[2:6]
     count = 0
     for key in keys:
@@ -161,15 +157,15 @@ if __name__ == "__main__":
             count = count + 1
 
     if count != len(keys):
-        logging.error("failed to retrive all items queried")
+        logger.error("failed to retrive all items queried")
     else:
-        logging.info("successfully retrived all items")
+        logger.info("successfully retrived all items")
 
     result = vector_store.search(str(uuid.uuid4()))
     if result:
-        logging.error("random id should not return a valid result")
+        logger.error("random id should not return a valid result")
 
-    logging.warning("API: vector_search ")
+    logger.warning("API: vector_search ")
 
     candidates = {
         "/home/anandas/demos/degirum_hailo_examples/assets/Friends.jpg": 6,
@@ -179,9 +175,9 @@ if __name__ == "__main__":
     for path, face_count in candidates.items():
         detector = DetectionModel()
         detected_faces = detector.scan(path=path)
-        logging.info(f"found {len(detected_faces.results[0])} faces")
+        logger.info(f"found {len(detected_faces.results[0])} faces")
         if len(detected_faces.results) != face_count:
-            logging.error(f"not all faces got detected in {path}")
+            logger.error(f"not all faces got detected in {path}")
 
         for result in detected_faces.results:
             result = detected_faces.results[0]
@@ -198,31 +194,31 @@ if __name__ == "__main__":
                 vector=face_embedding, threshold=threshold, count=count
             )
             if result:
-                logging.info(
+                logger.info(
                     f'matches(threshold={threshold}, count={count}): {[f"id:{face[0]}, similarity score:{face[1]}" for face in result]} '
                 )
             else:
-                logging.error("Failed to detect known faces")
+                logger.error("Failed to detect known faces")
 
-    logging.warning("API: remove ")
+    logger.warning("API: remove ")
     count = 0
     for key in keys:
         id = faces[key]
         if vector_store.remove(id=id):
             result = vector_store.search(id=id)
             if result and result["id"] == id:
-                logging.error("remove failed")
+                logger.error("remove failed")
 
     num_rows = len(vector_store.tbl)
     if num_rows > len(faces.keys()) - len(keys):
-        logging.error("not all items got removed.")
+        logger.error("not all items got removed.")
     elif num_rows < len(faces.keys()) - len(keys):
-        logging.error("many items got removed than expected.")
+        logger.error("many items got removed than expected.")
     else:
-        logging.info(f"successfully removed {len(keys)} items")
+        logger.info(f"successfully removed {len(keys)} items")
 
     sys.exit(1)
 
     if os.path.isdir(test_db_uri):
         shutil.rmtree(test_db_uri)
-    logging.warning("== done == ")
+    logger.warning("== done == ")

@@ -1,17 +1,15 @@
-import logging
 import os
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
 import cv2
+from loguru import logger
 import numpy as np
 from PIL import Image
 
 from .face import DetectedFace, Face, RegisteredFace, RegisteredPerson
 from .proc import DetectionModel, EmbeddingModel, align_and_crop
 from .store import FaceVectorStore, faces_db, person_db
-
-logger = logging.getLogger(__name__)
 
 
 class FaceRecognizer:

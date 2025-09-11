@@ -1,19 +1,17 @@
 from collections import OrderedDict
 from functools import wraps
 
+# from loguru import logger
 from flask import request
 from marshmallow import ValidationError
 from werkzeug.exceptions import InternalServerError, NotFound
-
-enableLogging = False
 
 
 def custom_error_handler(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if enableLogging:
-            form_data = request.form.to_dict()
-            print(f"Incoming Request Data: {form_data}")
+        # form_data = request.form.to_dict()
+        # logger(f"Incoming Request Data: {form_data}")
         try:
             return func(*args, **kwargs)
         except Exception as err:
