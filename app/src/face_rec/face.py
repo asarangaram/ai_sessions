@@ -1,10 +1,11 @@
 import base64
+from dataclasses import dataclass, field
 from enum import StrEnum, auto
-
-from dataclasses import dataclass,field
 from typing import List, Optional, Tuple
-from sqlalchemy import Enum
+
 from pydantic import BaseModel, field_serializer
+from sqlalchemy import Enum
+
 
 class RecognitionStatus(StrEnum):
     UNCHECKED = auto()
@@ -14,11 +15,10 @@ class RecognitionStatus(StrEnum):
 
 class Face(BaseModel):
     bbox: Optional[Tuple[float, float, float, float]]
-    landmarks: Optional[List[Tuple[float, float]]] = None 
+    landmarks: Optional[List[Tuple[float, float]]] = None
     status: str = field(default=RecognitionStatus.UNCHECKED)
     image: Optional[bytes] = None
 
-    
     @field_serializer("bbox")
     def serialize_bbox(self, v: Optional[Tuple[float, float, float, float]], _info):
         if v is None:
@@ -59,7 +59,6 @@ class KnownFace(Face):
 
     def __post_init__(self):
         self.status = RecognitionStatus.FOUND
-
 
 
 class RegisteredPerson(BaseModel):

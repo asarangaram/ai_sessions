@@ -1,7 +1,8 @@
-from flask_socketio import SocketIO
-from flask import request, session
 import logging
+
 import eventlet
+from flask import request, session
+from flask_socketio import SocketIO
 
 from .model import AISessionManager
 

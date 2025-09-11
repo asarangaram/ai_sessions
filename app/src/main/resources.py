@@ -2,9 +2,8 @@ from flask.views import MethodView
 from flask_smorest import Blueprint
 from marshmallow import Schema, fields
 
-
-from .model import LandingPageModel
 from ..common.error_handler import custom_error_handler
+from .model import LandingPageModel
 
 
 class LandingPageResultSchema(Schema):

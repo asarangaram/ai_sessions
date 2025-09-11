@@ -1,7 +1,8 @@
-from typing import Optional, Self
-from sqlalchemy.orm import relationship
-from sqlalchemy.exc import SQLAlchemyError
 import uuid
+from typing import Optional, Self
+
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import relationship
 
 
 def faces_db(db, dbModel):
@@ -76,13 +77,12 @@ def faces_db(db, dbModel):
             except SQLAlchemyError as e:
                 session.rollback()
                 raise ValueError(f"Failed to delete face: {str(e)}")
-        
+
         def to_json(self):
             return {
                 "person_id": self.person_id,
                 "path": self.path,
-                "person": self.person.to_json()
+                "person": self.person.to_json(),
             }
-             
 
     return RegisteredFaceInDB

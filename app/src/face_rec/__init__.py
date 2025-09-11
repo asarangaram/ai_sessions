@@ -1,10 +1,10 @@
-
 import os
 from pathlib import Path
+from types import SimpleNamespace
+
+import lancedb
 import sqlalchemy as sa
 from sqlalchemy.orm import declarative_base, sessionmaker
-from types import SimpleNamespace
-import lancedb
 
 from .face_rec import FaceRecognizer
 
@@ -34,9 +34,6 @@ def create_db(path, preserve_past: bool = True):
     return db
 
 
-
-
-
 def create_vector_db(path, preserve_past: bool = True):
     directory = os.path.dirname(path)
     os.makedirs(directory, exist_ok=True)
@@ -58,11 +55,14 @@ def setup_face_dir(face_dir: str, preserve_past: bool = True):
                 os.unlink(file_path)  # remove file or symlink
     return face_dir
 
-def load(store_dir, preserve_past:bool = True):
+
+def load(store_dir, preserve_past: bool = True):
     db = create_db(f"{store_dir}/store.db", preserve_past=preserve_past)
     vectordb = create_vector_db(f"{store_dir}/vector.db", preserve_past=preserve_past)
     Base = declarative_base()
-    face_dir = setup_face_dir(face_dir=f"{store_dir}/images", preserve_past=preserve_past)
+    face_dir = setup_face_dir(
+        face_dir=f"{store_dir}/images", preserve_past=preserve_past
+    )
 
     recogniser = FaceRecognizer(
         db=db,

@@ -1,6 +1,8 @@
-import numpy as np
 import cv2
+import numpy as np
+
 from .profiler import timed
+
 
 @timed
 def align_and_crop(img, landmarks, image_size=112):
@@ -46,9 +48,11 @@ def align_and_crop(img, landmarks, image_size=112):
     dst[:, 0] += diff_x  # Apply the horizontal shift
 
     # Estimate the similarity transformation matrix to align the landmarks with the reference keypoints
-    M, inliers = cv2.estimateAffinePartial2D(np.array(landmarks), dst, ransacReprojThreshold=1000)
+    M, inliers = cv2.estimateAffinePartial2D(
+        np.array(landmarks), dst, ransacReprojThreshold=1000
+    )
     assert np.all(inliers == True)
-    
+
     # Apply the affine transformation to the input image to align the face
     aligned_img = cv2.warpAffine(img, M, (image_size, image_size), borderValue=0.0)
 

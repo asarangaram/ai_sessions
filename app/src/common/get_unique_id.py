@@ -1,10 +1,11 @@
 import hashlib
-import socket
-import os
-import sys
 import logging
+import os
+import socket
+import sys
 
-def get_unique_device_id(hostname:str):
+
+def get_unique_device_id(hostname: str):
     """
     Attempts to get a unique device ID from specific OS-based locations,
     prioritizing Raspberry Pi, then Linux, then macOS.
@@ -13,26 +14,26 @@ def get_unique_device_id(hostname:str):
     logging.warning(hostname)
     # 1. Try to get the Raspberry Pi CPU serial number
     try:
-        with open('/proc/cpuinfo', 'r') as f:
+        with open("/proc/cpuinfo", "r") as f:
             for line in f:
-                if line.startswith('Serial'):
-                    serial_number = line.split(':')[1].strip()
+                if line.startswith("Serial"):
+                    serial_number = line.split(":")[1].strip()
                     return f"{hostname}-hw-{serial_number[-8:]}"
     except FileNotFoundError:
         pass  # Continue to the next check
 
     # 2. Try to get the Linux machine-id
     try:
-        with open('/etc/machine-id', 'r') as f:
+        with open("/etc/machine-id", "r") as f:
             machine_id = f.read().strip()
-            sha256_hash = hashlib.sha256(machine_id.encode('utf-8')).hexdigest()
+            sha256_hash = hashlib.sha256(machine_id.encode("utf-8")).hexdigest()
             return f"{hostname}-mid-{sha256_hash[:8]}"
     except FileNotFoundError:
         pass  # Continue to the next check
-    
+
     # 3. Try to get the macOS UUID
     try:
-        with open('/private/var/db/uuidtext/uuid', 'r') as f:
+        with open("/private/var/db/uuidtext/uuid", "r") as f:
             unique_id = f.read().strip()
             return f"{hostname}--uuid-{unique_id}"
     except FileNotFoundError:
@@ -41,7 +42,8 @@ def get_unique_device_id(hostname:str):
     # If all methods fail, raise an error and exit
     raise RuntimeError("Could not find a unique device ID from any known location.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     try:
         unique_id = get_unique_device_id()
         print(unique_id)

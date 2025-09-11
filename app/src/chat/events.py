@@ -1,9 +1,8 @@
 from flask import session
-from flask_socketio import emit, join_room, leave_room
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit, join_room, leave_room
 
 
-def register_chat_events(socketio: SocketIO,  app=None):
+def register_chat_events(socketio: SocketIO, app=None):
     @socketio.on("joined", namespace="/chat")
     def joined(message):
         """Sent by clients when they enter a room.
@@ -25,7 +24,7 @@ def register_chat_events(socketio: SocketIO,  app=None):
         The message is sent to all people in the room."""
         print(session)
         room = session.get("room")
-        msg = message['msg']
+        msg = message["msg"]
         emit(
             "message",
             {

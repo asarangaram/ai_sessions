@@ -1,44 +1,9 @@
-import numpy as np
 import json
+
+import numpy as np
 
 
 class PostProcessor:
-    def __init__(self, json_config):
-        """
-        Initialize RetinaFace postprocessor from a JSON configuration.
-        Args:
-            json_config (dict): JSON configuration dictionary.
-        """
-        config = json.loads(json_config)
-        # Parse configuration
-        post_process_config = config["POST_PROCESS"][0]
-        anchor_config = post_process_config["AnchorConfig"]
-        pre_process_config = config["PRE_PROCESS"][0]
-
-        # Input dimensions
-        self.input_size = (pre_process_config["InputH"], pre_process_config["InputW"])
-
-        # Anchor configuration
-        self.cfg = {
-            "min_sizes": anchor_config["MinSizes"],
-            "steps": anchor_config["Steps"],
-            "variance": [0.1, 0.2],  # Default variance for RetinaFace models
-        }
-
-        # Thresholds
-        self.confidence_threshold = post_process_config.get("OutputConfThreshold", 0.5)
-        self.nms_threshold = post_process_config.get("OutputNMSThreshold", 0.4)
-
-        # Load label dictionary
-        label_path = post_process_config.get("LabelsPath", None)
-        if label_path is None:
-            raise ValueError("LabelsPath is required in POST_PROCESS configuration.")
-        with open(label_path, "r") as json_file:
-            self._label_dictionary = json.load(json_file)
-
-        # Generate priors and anchor info
-        self.priors = self._generate_priors()
-        self.anchor_info = self._generate_anchor_info()
 
     def _generate_anchor_info(self):
         """
@@ -104,6 +69,43 @@ class PostProcessor:
 
         priors = np.array(anchors, dtype=np.float32)
         return priors
+
+    def __init__(self, json_config):
+        """
+        Initialize RetinaFace postprocessor from a JSON configuration.
+        Args:
+            json_config (dict): JSON configuration dictionary.
+        """
+        config = json.loads(json_config)
+        # Parse configuration
+        post_process_config = config["POST_PROCESS"][0]
+        anchor_config = post_process_config["AnchorConfig"]
+        pre_process_config = config["PRE_PROCESS"][0]
+
+        # Input dimensions
+        self.input_size = (pre_process_config["InputH"], pre_process_config["InputW"])
+
+        # Anchor configuration
+        self.cfg = {
+            "min_sizes": anchor_config["MinSizes"],
+            "steps": anchor_config["Steps"],
+            "variance": [0.1, 0.2],  # Default variance for RetinaFace models
+        }
+
+        # Thresholds
+        self.confidence_threshold = post_process_config.get("OutputConfThreshold", 0.5)
+        self.nms_threshold = post_process_config.get("OutputNMSThreshold", 0.4)
+
+        # Load label dictionary
+        label_path = post_process_config.get("LabelsPath", None)
+        if label_path is None:
+            raise ValueError("LabelsPath is required in POST_PROCESS configuration.")
+        with open(label_path, "r") as json_file:
+            self._label_dictionary = json.load(json_file)
+
+        # Generate priors and anchor info
+        self.priors = self._generate_priors()
+        self.anchor_info = self._generate_anchor_info()
 
     def _dequantize(self, tensor_list, details):
         """

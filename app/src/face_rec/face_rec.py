@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
@@ -5,13 +6,10 @@ from typing import List, Optional, Tuple, Union
 import cv2
 import numpy as np
 from PIL import Image
-import logging
 
-
+from .face import DetectedFace, Face, RegisteredFace, RegisteredPerson
 from .proc import DetectionModel, EmbeddingModel, align_and_crop
 from .store import FaceVectorStore, faces_db, person_db
-from .face import DetectedFace, Face, RegisteredFace, RegisteredPerson
-
 
 logger = logging.getLogger(__name__)
 
@@ -20,14 +18,6 @@ class FaceRecognizer:
     face_table_name = "face"
     face_vector_table = "face"
     person_table_name = "person"
-
-    @classmethod
-    def vector_tables(cls):
-        return [cls.face_vector_table]
-
-    @classmethod
-    def tables(cls):
-        return [cls.face_table_name, cls.person_table_name]
 
     def __init__(
         self, db, dbModel, vectordb, face_dir: str, is_interactive: bool = False
@@ -43,6 +33,64 @@ class FaceRecognizer:
 
         self.faceVectorStore = FaceVectorStore(
             vectordb, table_name=self.face_vector_table
+        )
+
+    @classmethod
+    def vector_tables(cls):
+        return [cls.face_vector_table]
+
+    @classmethod
+    def tables(cls):
+        return [cls.face_table_name, cls.person_table_name]
+
+    def _save_file(
+        self, name: str, img: Union[np.ndarray, Image.Image], ext="png"
+    ) -> Path:
+        """
+        Save an image to `folder` with a unique name in the format <name>_n.ext.
+        Returns the saved Path.
+        """
+        folder = Path(self.face_dir)
+        folder.mkdir(parents=True, exist_ok=True)
+
+        counter = 1
+        while True:
+            file_name = f"{name}_{counter}"
+            file_path = folder / f"{file_name}.{ext}"
+            if not file_path.exists():
+                break
+            counter += 1
+
+        if isinstance(img, Image.Image):
+            img.save(file_path)
+        elif isinstance(img, np.ndarray):
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            Image.fromarray(img_rgb).save(file_path)
+        else:
+            raise TypeError("img must be a PIL Image or NumPy array")
+
+        return file_name
+
+    def _save_face(self, identity, aligned_img, face_embedding) -> RegisteredFace:
+        person = None
+        if isinstance(identity, int):  # Id is provided.
+            person = self.RegisteredPerson.get_person(id=identity)
+        elif isinstance(identity, str):
+            person = self.RegisteredPerson.create(identity)
+            pass
+
+        if not person:
+            logger.warning(f"failed to get person with identity: {identity}")
+            return None
+        file_name = self._save_file(name=f"{person.name}_{person.id}", img=aligned_img)
+        face = self.RegisteredFace.create(person_id=person.id, path=file_name)
+        if not face:
+            logger.warning(f"failed to get save face for identity {identity}")
+            os.unlink(Path.joinpath(self.face_dir, f"{file_name}.png"))
+            return None
+        self.faceVectorStore.add(id=face.id, vector=face_embedding)
+        return RegisteredFace(
+            id=face.id, person_id=face.person.id, person_name=face.person.name
         )
 
     def register_face(
@@ -150,56 +198,6 @@ class FaceRecognizer:
                 saved_faces.append(face)
 
         return saved_faces
-
-    def _save_face(self, identity, aligned_img, face_embedding) -> RegisteredFace:
-        person = None
-        if isinstance(identity, int):  # Id is provided.
-            person = self.RegisteredPerson.get_person(id=identity)
-        elif isinstance(identity, str):
-            person = self.RegisteredPerson.create(identity)
-            pass
-
-        if not person:
-            logger.warning(f"failed to get person with identity: {identity}")
-            return None
-        file_name = self._save_file(name=f"{person.name}_{person.id}", img=aligned_img)
-        face = self.RegisteredFace.create(person_id=person.id, path=file_name)
-        if not face:
-            logger.warning(f"failed to get save face for identity {identity}")
-            os.unlink(Path.joinpath(self.face_dir, f"{file_name}.png"))
-            return None
-        self.faceVectorStore.add(id=face.id, vector=face_embedding)
-        return RegisteredFace(
-            id=face.id, person_id=face.person.id, person_name=face.person.name
-        )
-
-    def _save_file(
-        self, name: str, img: Union[np.ndarray, Image.Image], ext="png"
-    ) -> Path:
-        """
-        Save an image to `folder` with a unique name in the format <name>_n.ext.
-        Returns the saved Path.
-        """
-        folder = Path(self.face_dir)
-        folder.mkdir(parents=True, exist_ok=True)
-
-        counter = 1
-        while True:
-            file_name = f"{name}_{counter}"
-            file_path = folder / f"{file_name}.{ext}"
-            if not file_path.exists():
-                break
-            counter += 1
-
-        if isinstance(img, Image.Image):
-            img.save(file_path)
-        elif isinstance(img, np.ndarray):
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            Image.fromarray(img_rgb).save(file_path)
-        else:
-            raise TypeError("img must be a PIL Image or NumPy array")
-
-        return file_name
 
     def forget_face(self, face_id: str) -> bool:
         """
@@ -320,8 +318,6 @@ class FaceRecognizer:
                 detected_faces.image, landmarks
             )  # Align and crop face
             aligned_faces.append(
-                DetectedFace(
-                    bbox=(x1, y1, x2, y2), landmarks=landmarks
-                )
+                DetectedFace(bbox=(x1, y1, x2, y2), landmarks=landmarks)
             )
         return aligned_faces

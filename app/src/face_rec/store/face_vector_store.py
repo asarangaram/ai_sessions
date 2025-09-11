@@ -1,7 +1,8 @@
 import uuid
-from lancedb.pydantic import LanceModel, Vector
+
 import lancedb
 import numpy as np
+from lancedb.pydantic import LanceModel, Vector
 
 
 class FaceRecognitionSchema(LanceModel):
@@ -16,7 +17,9 @@ class FaceVectorStore:
             tbl = db.create_table(
                 table_name,
                 schema=FaceRecognitionSchema,
-                data=[{"id": "rand_0", "vector": np.random.rand(512).astype(np.float32)}],
+                data=[
+                    {"id": "rand_0", "vector": np.random.rand(512).astype(np.float32)}
+                ],
             )
 
         else:
@@ -66,11 +69,11 @@ class FaceVectorStore:
 
 
 if __name__ == "__main__":
-    import os
-    import sys
-    import shutil
-    from pathlib import Path
     import logging
+    import os
+    import shutil
+    import sys
+    from pathlib import Path
 
     from ..proc.align_and_crop import align_and_crop
     from ..proc.face_detection import DetectionModel, EmbeddingModel

@@ -1,13 +1,13 @@
 import argparse
 import json
-from pathlib import Path
 import logging
+from pathlib import Path
 
 from .src.face_rec import load
 
 logging.basicConfig(
     level=logging.WARNING,  # global default
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -38,8 +38,7 @@ if __name__ == "__main__":
         help="One or more images to recognize faces in it",
     )
     args = parser.parse_args()
-    
-    
+
     rebuild_store = args.rebuild_store
     if rebuild_store:
         logger.warning(f"Rebuild Requested")
@@ -55,11 +54,14 @@ if __name__ == "__main__":
                 if file.suffix.lower() in (".png", ".jpg", ".jpeg"):
                     all_faces.append((file.stem.split("_")[0], str(file)))
             face_ids = recogniser.register_faces_no_batch(all_faces)
-            logger.warning(f"Found {len(all_faces)} images and registered {len(face_ids)} faces")
+            logger.warning(
+                f"Found {len(all_faces)} images and registered {len(face_ids)} faces"
+            )
             if len(face_ids) < len(all_faces):
-                logger.warning("Some images were skipped as there is no face in main faces in a single image ")
+                logger.warning(
+                    "Some images were skipped as there is no face in main faces in a single image "
+                )
     if args.recognize:
         for path in args.recognize:
             result = recogniser.recognize_faces(path)
             print(json.dumps(result, indent=2))
-        

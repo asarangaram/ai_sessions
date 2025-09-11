@@ -1,6 +1,7 @@
 from typing import List, Optional, Self
-from sqlalchemy.orm import relationship, Session
+
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, relationship
 
 
 def person_db(db, dbModel):
@@ -131,16 +132,16 @@ def person_db(db, dbModel):
             except SQLAlchemyError as e:
                 session.rollback()
                 raise ValueError(f"Failed to hard delete person: {str(e)}")
-        
+
         def to_json(self):
             print(self.faces)
             return {
                 "id": self.id,
                 "name": self.name,
-                "key_face_id": self.key_face_id if  self.key_face_id else self.faces[0].id ,
-                "is_hidden": self.is_hidden
+                "key_face_id": (
+                    self.key_face_id if self.key_face_id else self.faces[0].id
+                ),
+                "is_hidden": self.is_hidden,
             }
-           
-
 
     return RegisteredPersonInDB

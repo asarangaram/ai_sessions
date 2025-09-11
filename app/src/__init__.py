@@ -2,13 +2,14 @@ import eventlet
 
 eventlet.monkey_patch()
 
-from flask_socketio import SocketIO
 from flask import Flask
+from flask_socketio import SocketIO
 
-from .common.config import ConfigClass
-from .chat import register_chat_apis
 from .ai_session import register_ai_session_handler
+from .chat import register_chat_apis
+from .common.config import ConfigClass
 from .main import register_main
+
 
 def app_factory(debug=False):
     """Create an application."""
@@ -30,7 +31,3 @@ def app_factory(debug=False):
 
 
 application, socketio = app_factory(debug=True)
-
-
-
-    

@@ -1,11 +1,10 @@
 # config.py
-import os
-from dotenv import load_dotenv
 import logging
+import os
+
+from dotenv import load_dotenv
 
 from .get_unique_id import get_unique_device_id
-
-
 
 env_file = "../env/.env"
 

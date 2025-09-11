@@ -1,11 +1,12 @@
+from collections import OrderedDict
+from functools import wraps
+
 from flask import request
 from marshmallow import ValidationError
 from werkzeug.exceptions import InternalServerError, NotFound
 
-from collections import OrderedDict
-from functools import wraps
-
 enableLogging = False
+
 
 def custom_error_handler(func):
     @wraps(func)
@@ -26,7 +27,7 @@ def custom_error_handler(func):
                 response["error"] = {"error": str(err)}
                 response["code"] = 404
             elif isinstance(err, InternalServerError):
-                response["error"] =  {"error": str(err)}
+                response["error"] = {"error": str(err)}
                 response["code"] = 500
             else:
                 response["error"] = {"error": str(err)}

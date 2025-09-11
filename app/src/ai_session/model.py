@@ -2,33 +2,31 @@ import os
 import shutil
 import threading
 import time
-import eventlet
-from PIL import Image
-
-from werkzeug.utils import secure_filename
 from pathlib import Path
+
+import eventlet
 from flask_socketio import emit
+from PIL import Image
+from werkzeug.utils import secure_filename
 
 from ..common import ConfigClass, TempFile
-from ..face_rec import load, FaceRecognizer
+from ..face_rec import FaceRecognizer, load
 
 
 class SessionState:
     def __init__(self, sid):
         self.sid = sid
         self.last_active = time.time()
-        self.session_path = Path(ConfigClass.UPLOAD_STORAGE_LOCATION)  / 'sessions' / sid
+        self.session_path = Path(ConfigClass.UPLOAD_STORAGE_LOCATION) / "sessions" / sid
         if not os.path.exists(self.session_path):
             os.makedirs(self.session_path)
-        
-        
+
     @property
     def uploaded_img_path(self):
-        path = self.session_path / 'uploaded'
+        path = self.session_path / "uploaded"
         if not path.exists():
             path.mkdir(exist_ok=True)
         return path
-
 
     def update(self):
         self.last_active = time.time()
@@ -69,15 +67,15 @@ class SessionState:
         if temp_file:
             temp_file.remove()
         return result
-    
+
     def get_image_dimensions(self, image_path):
         try:
             with Image.open(image_path) as img:
                 return img.size
         except Exception as e:
             return None
-    
-    def recognize(self, recogniser:FaceRecognizer, identifier:str):
+
+    def recognize(self, recogniser: FaceRecognizer, identifier: str):
         self.emit_progress(f"Acquired hardware")
         file_path = self.uploaded_img_path / identifier
 
@@ -85,20 +83,17 @@ class SessionState:
             return False, f"file {identifier} doesn't exists"
         size = self.get_image_dimensions(file_path)
 
-        
         result = recogniser.recognize_faces(str(file_path))
-        
+
         self.emit_progress(f"faces detected")
-        
+
         return {"faces": result, "dimension": size}, None
-    
-    def emit_progress(self, msg:str):
+
+    def emit_progress(self, msg: str):
         emit("progress", msg, to=self.sid)
 
-    def emit_result(self, result:str):
+    def emit_result(self, result: str):
         emit("result", result, to=self.sid)
-    
-
 
 
 class AISessionManager:
@@ -141,36 +136,32 @@ class AISessionManager:
             return session
         else:
             raise Exception(f"Session {sid} doesn't exists, reconnect")
-        
+
     def recognize(self, sid, identifier) -> bool:
-        session:SessionState = self._clients.get(sid, None)
+        session: SessionState = self._clients.get(sid, None)
         if not session:
             raise Exception(f"Session {sid} doesn't exists, reconnect")
         session.emit_progress(f"Received Face Recognition request for {identifier}")
         with self.resource_lock:
             if self.is_hw_in_use:
-                session.emit_result({'identifier':identifier,"status": "failed", "error": f"Resource is busy"})
+                session.emit_result(
+                    {
+                        "identifier": identifier,
+                        "status": "failed",
+                        "error": f"Resource is busy",
+                    }
+                )
                 return False
             self.is_hw_in_use = True
-        
-
 
         result, error = session.recognize(self.recogniser, identifier)
         with self.resource_lock:
             self.is_hw_in_use = False
         if result:
-            session.emit_result({'identifier':identifier,  "status": "success", **result})
+            session.emit_result(
+                {"identifier": identifier, "status": "success", **result}
+            )
         else:
-            session.emit_result({'identifier':identifier,"status": "failed", "error": error})
-    
-
-    
-
-    
-    
-
-
-
-        
-                
-
+            session.emit_result(
+                {"identifier": identifier, "status": "failed", "error": error}
+            )
