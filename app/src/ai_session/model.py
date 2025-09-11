@@ -50,26 +50,21 @@ class SessionState:
         )
 
     def upload_file(self, uploaded_file):
-        try:
-            temp_file = TempFile(uploaded_file)
-            metadata = temp_file.metadata()
-            md5 = metadata.get("md5")
-            _, ext = uploaded_file.filename.split(".", 1)
-            unique_name = md5 + "." + ext
-            file_path = self.uploaded_img_path / unique_name
-            result = {"file_identifier": unique_name, **metadata}
-            if file_path.exists():
-                result["status"] = "duplicate"
-            else:
-                shutil.move(temp_file.path, file_path)
-                result["status"] = "success"
-            if temp_file:
-                temp_file.remove()
-            logger.info(f"successfully uploaded {uploaded_file.filename} ")
-            return result
-        except Exception as e:
-            logger.exception(f" failed to upload {uploaded_file.filename} ")
-            raise
+        temp_file = TempFile(uploaded_file)
+        metadata = temp_file.metadata()
+        md5 = metadata.get("md5")
+        _, ext = uploaded_file.filename.split(".", 1)
+        unique_name = md5 + "." + ext
+        file_path = self.uploaded_img_path / unique_name
+        result = {"file_identifier": unique_name, **metadata}
+        if file_path.exists():
+            result["status"] = "duplicate"
+        else:
+            shutil.move(temp_file.path, file_path)
+            result["status"] = "success"
+        if temp_file:
+            temp_file.remove()
+        return result
 
     def get_image_dimensions(self, image_path):
         try:
