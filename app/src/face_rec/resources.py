@@ -1,13 +1,12 @@
 from flask import send_file
 from flask.views import MethodView
-from flask_smorest import Blueprint, abort, Schema
+from flask_smorest import Blueprint
 from flask_smorest.fields import Upload
-from marshmallow import fields as ma_fields
-from werkzeug.datastructures import FileStorage
+from marshmallow import fields as ma_fields, Schema
 
-
+from ..common.error_handler import custom_error_handler
 from ..common.temp_file import TempFile
-from face_rec import FaceRecognizer
+from .face_rec import FaceRecognizer
 
 
 class FaceUploadSchema(Schema):
@@ -34,8 +33,20 @@ class UpdatedPersonSchema(Schema):
 
 
 def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
+    @bp.route("/detect")
+    class Recognize(MethodView):
+        @custom_error_handler
+        def post(self, session_id):
+            raise Exception("Not implemented Yet")
+
+        @custom_error_handler
+        @bp.response(200)
+        def get(self, session_id):
+            return {"message": "Post the file to upload"}
+
     @bp.route("/face/register/person/new/<name>")
     class FaceRegisterPersonNew(MethodView):
+        @custom_error_handler
         @bp.arguments(FaceUploadSchema, location="files")
         @bp.response(201, RegisteredFaceSchema)
         def post(self, args, name):
@@ -51,6 +62,7 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
 
     @bp.route("/face/register/known/<int:id>")
     class FaceRegisterKnown(MethodView):
+        @custom_error_handler
         @bp.arguments(FaceUploadSchema, location="files")
         @bp.response(201, RegisteredFaceSchema)
         def post(self, args, id):
@@ -61,6 +73,7 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
 
     @bp.route("/face/reassign/<int:id>/new/<name>")
     class FaceReassignNew(MethodView):
+        @custom_error_handler
         def put(self, face_id, new_person_name):
             face = store.update_face(face_id=face_id, new_person_name=new_person_name)
             if not face:
@@ -69,6 +82,7 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
 
     @bp.route("/face/reassign/<int:id>/known/<known_id>")
     class FaceReassignKnown(MethodView):
+        @custom_error_handler
         def put(self, face_id, new_person_id):
             face = store.update_face(face_id=face_id, new_person_id=new_person_id)
             if not face:
@@ -77,6 +91,7 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
 
     @bp.route("/face/<id>")
     class Face(MethodView):
+        @custom_error_handler
         @bp.response(200, RegisteredFaceSchema)
         def get(self, id):
             face = store.get_face(id=id)
@@ -91,6 +106,7 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
 
     @bp.route("/face/<id>/person")
     class FacePerson(MethodView):
+        @custom_error_handler
         @bp.response(200, RegisteredPersonSchema)
         def get(self, id):
             person = store.get_person_by_face(id=id)
@@ -98,6 +114,7 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
 
     @bp.route("/persons")
     class Persons(MethodView):
+        @custom_error_handler
         @bp.response(200, RegisteredPersonSchema(many=True))
         def get(self):
             persons = store.get_all_persons()
@@ -105,6 +122,7 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
 
     @bp.route("/person/<int:id>")
     class Person(MethodView):
+        @custom_error_handler
         @bp.response(200, RegisteredPersonSchema)
         def get(self, id):
             person = store.get_person(id=id)

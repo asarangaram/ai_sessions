@@ -314,7 +314,7 @@ class FaceRecognizer:
     def recognize_faces(
         self, path: str, on_get_face_identity: Callable[[int], Tuple[str, str, str]]
     ) -> List[Face]:
-        aligned_faces, _ = self.face_detector(
+        aligned_faces, _ = self.detect_and_align_faces(
             path=path, on_get_face_identity=on_get_face_identity
         )
         faces_only = [entry.model_dump() for entry in aligned_faces]
@@ -332,12 +332,16 @@ class FaceRecognizer:
             # cropped_face = detected_faces.image[y1:y2, x1:x2]
             landmarks = [landmark["landmark"] for landmark in face["landmarks"]]
             aligned_face, _ = align_and_crop(detected_faces.image, landmarks)
-            save_path, identifier = on_get_face_identity(index)
-            cv2.imwrite(str(save_path), aligned_face)
+            image_path, vector_path, identifier = on_get_face_identity(index)
+            cv2.imwrite(str(image_path), aligned_face)
+            embedding_model = EmbeddingModel()
+            vector = embedding_model.extract_face_embedding(aligned_face)
+            np.save(vector_path, vector)
+
             aligned_faces.append(
                 DetectedFace(
                     bbox=(x1, y1, x2, y2), landmarks=landmarks, image=identifier
                 )
             )
             logger.info(f"face {index} is saved with identity {identifier}")
-        return aligned_faces
+        return aligned_faces, None
