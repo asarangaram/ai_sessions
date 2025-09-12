@@ -1,5 +1,10 @@
 # README
 
+## Start Server
+```
+HOST_NAME=$(hostname) gunicorn -k eventlet -w 1 -b 0.0.0.0:5002 src:application
+```
+
 ## Quick steps
 
 If you are running this container first time, perform settings before running the following command based on your system. The reason we have different setup is only to get the machine id which don't look trivial
