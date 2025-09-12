@@ -88,7 +88,7 @@ class FaceRecognizer:
             return None
         self.faceVectorStore.add(id=face.id, vector=face_embedding)
         return RegisteredFace(
-            id=face.id, person_id=face.person.id, person_name=face.person.name
+            id=face.id, personId=face.person.id, personName=face.person.name
         )
 
     def register_face(
@@ -225,9 +225,7 @@ class FaceRecognizer:
         persons = []
         for item in all:
             persons.append(
-                RegisteredPerson(
-                    id=item.id, name=item.name, key_face_id=item.key_face_id
-                )
+                RegisteredPerson(id=item.id, name=item.name, keyFaceId=item.key_face_id)
             )
         return persons
 
@@ -236,9 +234,7 @@ class FaceRecognizer:
         GET /person/{id}
         """
         item = self.RegisteredPerson.get_person(id=id)
-        return RegisteredPerson(
-            id=item.id, name=item.name, key_face_id=item.key_face_id
-        )
+        return RegisteredPerson(id=item.id, name=item.name, keyFaceId=item.key_face_id)
 
     def get_face(self, id: int) -> str:
         """
@@ -257,9 +253,7 @@ class FaceRecognizer:
         face = self.RegisteredFace.get_face(id=id)
         item = face.person
 
-        return RegisteredPerson(
-            id=item.id, name=item.name, key_face_id=item.key_face_id
-        )
+        return RegisteredPerson(id=item.id, name=item.name, keyFaceId=item.key_face_id)
 
     def update_person(
         self,
@@ -275,9 +269,7 @@ class FaceRecognizer:
         item = current.update(
             name=new_name, is_hidden=is_hidden, key_face_id=key_face_id
         )
-        return RegisteredPerson(
-            id=item.id, name=item.name, key_face_id=item.key_face_id
-        )
+        return RegisteredPerson(id=item.id, name=item.name, keyFaceId=item.key_face_id)
 
     def update_face(
         self, face_id: int, new_person_id: int = None, new_person_name: str = None
@@ -294,7 +286,7 @@ class FaceRecognizer:
 
         current = self.RegisteredFace.get_face(id=id)
         f = current.update(person_id=new_person_id)
-        return RegisteredFace(id=f.id, person_id=person.id, person_name=person.name)
+        return RegisteredFace(id=f.id, personId=person.id, personName=person.name)
 
     def recognize_faces(
         self, path: str, on_get_face_identity: Callable[[int], Tuple[str, str]]
