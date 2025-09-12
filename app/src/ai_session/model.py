@@ -74,9 +74,10 @@ class SessionState:
         return result
 
     def get_face_identity(self, image_identity, index):
-        file_path = self.generated_faces_path / f"{image_identity}_{index}.png"
         identifier = f"{image_identity}_{index}.png"
-        return file_path, identifier
+        face_path = self.generated_faces_path / identifier
+        vector_path = face_path.with_suffix(".npy")
+        return face_path, vector_path, identifier
 
     def get_face_path(self, identity: str):
         file_path = self.generated_faces_path / identity

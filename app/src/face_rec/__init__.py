@@ -2,9 +2,14 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
+from flask import Flask
+from flask_socketio import SocketIO
+from flask_smorest import Blueprint
 import lancedb
 import sqlalchemy as sa
 from sqlalchemy.orm import declarative_base, sessionmaker
+
+from .resources import register_face_rec_resources
 
 from .face_rec import FaceRecognizer
 
@@ -73,3 +78,11 @@ def load(store_dir, preserve_past: bool = True):
     )
     Base.metadata.create_all(db.engine)
     return recogniser
+
+
+def register_face_rec_handler(*, app: Flask, socket: SocketIO):
+    person_bp = Blueprint("face_store", __name__, url_prefix="/face_store")
+    register_face_rec_resources(bp=person_bp)
+    app.register_blueprint(person_bp)
+
+    pass
