@@ -10,7 +10,7 @@ from PIL import Image
 
 from .face import DetectedFace, Face, RegisteredFace, RegisteredPerson
 from .proc import DetectionModel, EmbeddingModel, align_and_crop
-from .store import FaceVectorStore, faces_db, person_db
+from .store import FaceVectorStore, faces_db, person_db, store_version_db
 
 
 class FaceRecognizer:
@@ -29,6 +29,9 @@ class FaceRecognizer:
 
         self.RegisteredFace = faces_db(db, dbModel)
         self.RegisteredPerson = person_db(db, dbModel)
+        self.StoreVersion = store_version_db(
+            db, dbModel, [self.RegisteredFace, self.RegisteredPerson]
+        )
 
         self.faceVectorStore = FaceVectorStore(
             vectordb, table_name=self.face_vector_table

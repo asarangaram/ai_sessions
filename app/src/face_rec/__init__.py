@@ -77,6 +77,7 @@ def load(store_dir, preserve_past: bool = True):
         is_interactive=False,
     )
     Base.metadata.create_all(db.engine)
+    recogniser.StoreVersion.track_table()
     return recogniser
 
 
