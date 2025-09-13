@@ -40,3 +40,5 @@ def store_version_db(db, dbModel, models):
             for model in models:
                 event.listen(model, "after_insert", cls._increment_version)
                 event.listen(model, "after_update", cls._increment_version)
+
+    return TableVersion

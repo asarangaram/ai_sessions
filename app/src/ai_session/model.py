@@ -80,8 +80,12 @@ class SessionState:
         return face_path, vector_path, identifier
 
     def get_face_path(self, identity: str):
-        file_path = self.generated_faces_path / identity
-        return file_path
+        face_path = self.generated_faces_path / identity
+        return face_path
+
+    def get_vector_path(self, identity: str):
+        face_path = self.generated_faces_path / identity
+        return face_path.with_suffix(".npy")
 
     def get_image_dimensions(self, image_path):
         try:
