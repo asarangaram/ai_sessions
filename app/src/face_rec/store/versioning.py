@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import event
+from sqlalchemy import event, select, update, insert
+
 
 """
 Raise alarm if the version goes beyond 2 * 10^9
@@ -15,22 +16,23 @@ def store_version_db(db, dbModel, models):
         version = db.Column(db.Integer, nullable=False, default=0)
 
         @classmethod
-        def get_version(cls, table_name: str) -> int:
-            row = cls.query.get(table_name)
+        def get_version(cls) -> int:
+            row = cls.query.get(0)
             return row.version if row else 0
 
         @classmethod
         def _increment_version(cls, mapper, connection, target):
-            table_name = target.__tablename__
-            # Use sessionmaker bound to connection
-            session = db.session
-            version_row = session.get(cls, table_name)
-            if not version_row:
-                version_row = cls(table_name=table_name, version=1)
-                session.add(version_row)
+            table = cls.__table__
+            current = connection.execute(
+                select(table.c.version).where(table.c.id == 0)
+            ).scalar()
+
+            if current is not None:
+                connection.execute(
+                    update(table).where(table.c.id == 0).values(version=current + 1)
+                )
             else:
-                version_row.version += 1
-            session.commit()
+                connection.execute(insert(table).values(id=0, version=1))
 
         @classmethod
         def track_table(cls):
