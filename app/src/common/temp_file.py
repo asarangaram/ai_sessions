@@ -3,6 +3,8 @@ import os
 import tempfile
 from typing import Any
 
+from werkzeug.datastructures import FileStorage
+
 
 class TempFile:
     """
@@ -10,7 +12,7 @@ class TempFile:
     Ensures unique filenames and provides cleanup functionality.
     """
 
-    def __init__(self, file: Any) -> None:
+    def __init__(self, file: FileStorage) -> None:
         temp_dir = tempfile.gettempdir()
         temp_path = os.path.join(temp_dir, file.filename)
 

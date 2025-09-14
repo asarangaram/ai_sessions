@@ -2,10 +2,10 @@ from flask import Flask
 from flask_smorest import Blueprint
 from flask_socketio import SocketIO
 
+from ..face_rec.resources import register_face_rec_resources
 from .events import register_ai_session_events
 from .model import AISessionManager
 from .resources import register_sessions_resources
-from ..face_rec.resources import register_face_rec_resources
 
 
 def register_ai_session_handler(*, app: Flask, socket: SocketIO):

@@ -1,6 +1,6 @@
-from src import application, socketio
-
 import logging
+
+from src import application, socketio
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 

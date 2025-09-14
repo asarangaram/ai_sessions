@@ -1,10 +1,12 @@
 from pathlib import Path
+
 from flask import request, send_file
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask_smorest.fields import Upload
-from marshmallow import Schema, fields
 from loguru import logger
+from marshmallow import Schema, fields
+
 from ..common import custom_error_handler
 from .model import AISessionManager, SessionState
 

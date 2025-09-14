@@ -1,6 +1,6 @@
 import os
-import eventlet
 
+import eventlet
 
 if not os.getenv("DEBUGPY_RUNNING"):
     eventlet.monkey_patch()

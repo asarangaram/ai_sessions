@@ -1,8 +1,11 @@
+from pathlib import Path
+
 from flask import send_file
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask_smorest.fields import Upload
-from marshmallow import fields as ma_fields, Schema
+from marshmallow import Schema
+from marshmallow import fields as ma_fields
 
 from ..common.error_handler import custom_error_handler
 from ..common.temp_file import TempFile
@@ -10,7 +13,7 @@ from .face_rec import FaceRecognizer
 
 
 class FaceUploadSchema(Schema):
-    face = Upload(required=True)  # Name of the file field must be 'face'
+    face = Upload(required=True)
     vector = Upload(required=True)
 
 
@@ -45,30 +48,14 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
             return {"message": "Post the file to upload"}
 
     @bp.route("/face/register/person/new/<name>")
-    class FaceRegisterPersonNew(MethodView):
+    class FaceRegisterPerson(MethodView):
         @custom_error_handler
         @bp.arguments(FaceUploadSchema, location="files")
         @bp.response(201, RegisteredFaceSchema)
         def post(self, args, name):
-            face_file: TempFile = TempFile(args["face"])
-            vector_file: TempFile = TempFile(args["vector"])
-
             face = store.register_face(
-                identity=name, face=face_file.path, vector=vector_file.path
+                name=name, face=args["face"], vector=args["vector"]
             )
-            face_file.remove()
-            vector_file.remove()
-            return face.model_dump()
-
-    @bp.route("/face/register/known/<int:id>")
-    class FaceRegisterKnown(MethodView):
-        @custom_error_handler
-        @bp.arguments(FaceUploadSchema, location="files")
-        @bp.response(201, RegisteredFaceSchema)
-        def post(self, args, id):
-            temp_file: TempFile = TempFile(args["face"])
-            face = store.register_face(path=temp_file.path, identity=id)
-            temp_file.remove()
             return face.model_dump()
 
     @bp.route("/face/reassign/<int:id>/new/<name>")

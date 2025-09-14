@@ -58,7 +58,6 @@ class RecognizedFace(Face):
 
 
 class RegisteredPerson(BaseModel):
-    id: int
     name: str
     keyFaceId: int
 

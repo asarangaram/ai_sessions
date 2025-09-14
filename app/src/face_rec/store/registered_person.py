@@ -7,8 +7,7 @@ from sqlalchemy.orm import Session, relationship
 def person_db(db, dbModel):
     class RegisteredPersonInDB(dbModel):
         __tablename__ = "person"
-        id = db.Column(db.Integer, primary_key=True)
-        name = db.Column(db.String, nullable=False)
+        name = db.Column(db.String, primary_key=True)
         key_face_id = db.Column(db.String(36), nullable=True)
         is_hidden = db.Column(db.Boolean, default=False, nullable=False)
         is_deleted = db.Column(db.Boolean, default=False, nullable=False)
@@ -22,7 +21,7 @@ def person_db(db, dbModel):
             name: str,
             is_hidden: bool = False,
             key_face_id: Optional[str] = None,
-            _allow_direct_init: bool = False,  # 👈 guard flag
+            _allow_direct_init: bool = False,
         ):
             if not _allow_direct_init:
                 raise TypeError("Use Person.create() to instantiate a Person object")
@@ -32,7 +31,7 @@ def person_db(db, dbModel):
 
         def __repr__(self):
             return (
-                f"<Person(id={self.id}, name={self.name}, "
+                f"<Person(name={self.name}, "
                 f"is_hidden={self.is_hidden}, key_face_id={self.key_face_id})>"
             )
 
@@ -55,9 +54,9 @@ def person_db(db, dbModel):
             return query.all()
 
         @classmethod
-        def find_by_id(cls, id: int) -> Optional[Self]:
+        def find_by_name(cls, name: int) -> Optional[Self]:
             session = cls._session()
-            return session.get(cls, id)
+            return session.get(cls, name)
 
         # --- Create ---
         @classmethod
@@ -136,7 +135,6 @@ def person_db(db, dbModel):
         def to_json(self):
             print(self.faces)
             return {
-                "id": self.id,
                 "name": self.name,
                 "key_face_id": (
                     self.key_face_id if self.key_face_id else self.faces[0].id

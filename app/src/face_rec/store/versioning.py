@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import event, select, update, insert
-
+from sqlalchemy import event, insert, select, update
 
 """
 Raise alarm if the version goes beyond 2 * 10^9

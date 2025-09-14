@@ -1,7 +1,7 @@
 import eventlet
-from loguru import logger
 from flask import request, session
 from flask_socketio import SocketIO
+from loguru import logger
 
 from .model import AISessionManager
 

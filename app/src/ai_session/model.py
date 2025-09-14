@@ -3,10 +3,10 @@ import shutil
 import threading
 import time
 from pathlib import Path
-from loguru import logger
 
 import eventlet
 from flask_socketio import emit
+from loguru import logger
 from PIL import Image
 from werkzeug.utils import secure_filename
 

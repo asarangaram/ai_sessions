@@ -50,6 +50,11 @@ class FaceVectorStore:
         metric_type: str = "cosine",
         count: int = 1,
     ) -> list[str, float]:
+        result = []
+        num_vectors = self.tbl.count()
+        if num_vectors == 0:
+            return result
+
         threshold = 0.3
         faces_found = (
             self.tbl.search(vector, vector_column_name="vector")
@@ -57,7 +62,6 @@ class FaceVectorStore:
             .limit(count)
             .to_list()
         )
-        result = []
 
         for face_found in faces_found:
             similarity_score = round(1 - face_found["_distance"], 2)

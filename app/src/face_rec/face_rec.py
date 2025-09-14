@@ -1,12 +1,13 @@
 import os
+import shutil
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
-import shutil
 
 import cv2
-from loguru import logger
 import numpy as np
+from loguru import logger
 from PIL import Image
+from werkzeug.datastructures import FileStorage
 
 from .face import DetectedFace, Face, RegisteredFace, RegisteredPerson
 from .proc import DetectionModel, EmbeddingModel, align_and_crop
@@ -46,16 +47,12 @@ class FaceRecognizer:
         return [cls.face_table_name, cls.person_table_name]
 
     def _save_file(
-        self, name: str, img: Union[np.ndarray, Image.Image, Path], ext="png"
+        self, name: str, img: Union[np.ndarray, Image.Image, FileStorage], ext="png"
     ) -> Path:
-        """
-        Save an image to `folder` with a unique name in the format <name>_n.ext.
-        Returns the saved Path.
-        """
         folder = Path(self.face_dir)
         folder.mkdir(parents=True, exist_ok=True)
 
-        if isinstance(img, Path):
+        if isinstance(img, FileStorage):
             ext = img.suffix
             if ext.startswith("."):
                 ext = ext[1:]
@@ -73,49 +70,58 @@ class FaceRecognizer:
         elif isinstance(img, np.ndarray):
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             Image.fromarray(img_rgb).save(file_path)
-        elif isinstance(img, Path):
-            if not img.is_file():
-                raise FileNotFoundError(f"File not found at {img}")
-            shutil.copy(img, file_path)
+        elif isinstance(img, FileStorage):
+            img.save(file_path)
         else:
-            raise TypeError("img must be a PIL Image or NumPy array or a path string")
+            raise TypeError("img must be a PIL Image or NumPy array or a Path")
 
         return file_name
 
     def register_face(
         self,
-        identity,
-        face: Union[np.ndarray, Image.Image, Path],
-        vector: Union[np.ndarray, Path],
+        name: str,
+        face: Union[np.ndarray, Image.Image, FileStorage],
+        vector: Union[np.ndarray, FileStorage],
     ) -> RegisteredFace:
-        person = None
-        if isinstance(identity, int):  # Id is provided.
-            person = self.RegisteredPerson.get_person(id=identity)
-        elif isinstance(identity, str):
-            person = self.RegisteredPerson.create(identity)
-            pass
+
+        # Create or retrive person
+        person = self.RegisteredPerson.find_by_name(name=name)
+        if not person:
+            person = self.RegisteredPerson.create(name)
 
         if not person:
-            logger.warning(f"failed to get person with identity: {identity}")
+            logger.warning(f"failed to get person with name: {name}")
             return None
-        file_name = self._save_file(name=f"{person.name}_{person.id}", img=face)
+
+        # Check if the image already exists
+        # we can use vector data base for finding the identity
+        # that will be more accurate
+        if isinstance(vector, Path):
+            vector = np.load(FileStorage)
+
+        found = self.faceVectorStore.vector_search(vector=vector)
+        if found:
+            face = self.RegisteredFace.get_face(id=found)
+            return RegisteredFace(id=face.id, personName=face.person.name)
+
+        file_name = self._save_file(name=person.name, img=face)
         face = self.RegisteredFace.create(person_id=person.id, path=file_name)
         if not face:
-            logger.warning(f"failed to get save face for identity {identity}")
+            logger.warning(f"failed to get save face for identity {name}")
             os.unlink(Path.joinpath(self.face_dir, f"{file_name}.png"))
             return None
 
         if isinstance(vector, Path):
             vector = np.load(vector)
-            if len(vector) == 512:
-                raise TypeError("vector must be a NumPy array of 512 elements")
+            if len(vector) != 512:
+                raise TypeError(
+                    f"vector must be a NumPy array of 512 elements, but vector size is {len(vector)}"
+                )
         elif not isinstance(vector, np.ndarray):
             raise TypeError("vector must be a NumPy array or a path string")
 
         self.faceVectorStore.add(id=face.id, vector=vector)
-        return RegisteredFace(
-            id=face.id, personId=face.person.id, personName=face.person.name
-        )
+        return RegisteredFace(id=face.id, personName=face.person.name)
 
     def detect_and_register_face(
         self, path: str, person_id: int = None, person_name: str = None
@@ -150,7 +156,7 @@ class FaceRecognizer:
         face_embedding = embedding_model.extract_face_embedding(aligned_img)
 
         face = self.register_face(
-            identity=person_id if person_id else person_name,
+            name=person_id if person_id else person_name,
             face=aligned_img,
             vector=face_embedding,
         )
@@ -213,7 +219,7 @@ class FaceRecognizer:
             result = detected_faces.results[0]
             embedding.append((identity, aligned_img, face_embedding))
             face = self.register_face(
-                identity=identity,
+                name=identity,
                 face=aligned_img,
                 vector=face_embedding,
             )

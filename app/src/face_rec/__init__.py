@@ -2,16 +2,15 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
-from flask import Flask
-from flask_socketio import SocketIO
-from flask_smorest import Blueprint
 import lancedb
 import sqlalchemy as sa
+from flask import Flask
+from flask_smorest import Blueprint
+from flask_socketio import SocketIO
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from .resources import register_face_rec_resources
-
 from .face_rec import FaceRecognizer
+from .resources import register_face_rec_resources
 
 
 def create_db(path, preserve_past: bool = True):
