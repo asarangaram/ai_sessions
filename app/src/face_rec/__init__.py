@@ -79,11 +79,3 @@ def load(store_dir, preserve_past: bool = True):
     Base.metadata.create_all(db.engine)
     recogniser.StoreVersion.track_table()
     return recogniser
-
-
-def register_face_rec_handler(*, app: Flask, socket: SocketIO):
-    person_bp = Blueprint("face_store", __name__, url_prefix="/face_store")
-    register_face_rec_resources(bp=person_bp)
-    app.register_blueprint(person_bp)
-
-    pass
