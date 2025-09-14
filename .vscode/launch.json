@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "ai_session",
+            "type": "debugpy",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/app",
+            "program": "run.py",
+            "env": {
+                "HOST_NAME": "colanapps",
+                "APP_ENV": "development",
+                "SECRET_KEY": "debug-secret",
+                "DEBUGPY_RUNNING": "1",
+            },
+            "justMyCode": true
+        },
+        
+    ]
+}
