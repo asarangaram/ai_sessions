@@ -1,6 +1,9 @@
+import os
 import eventlet
 
-eventlet.monkey_patch()
+
+if not os.getenv("DEBUGPY_RUNNING"):
+    eventlet.monkey_patch()
 
 from flask import Flask
 from flask_socketio import SocketIO
