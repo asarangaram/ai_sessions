@@ -50,29 +50,41 @@ class FaceRecognizer:
     def _save_file(
         self, name: str, img: Union[np.ndarray, Image.Image, FileStorage], ext="png"
     ) -> Path:
+
+        if isinstance(img, Image.Image):
+            self.info_logger(f"Received PIL Image")
+        elif isinstance(img, np.ndarray):
+            self.info_logger(f"Received CV2 Image")
+        elif isinstance(img, FileStorage):
+            self.info_logger("Received Uploaded File")
+        else:
+            self.info_logger("img must be a PIL Image or NumPy array or a FileStorage")
+            raise TypeError("img must be a PIL Image or NumPy array or a Path")
+
         folder = Path(self.face_dir)
         folder.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Faces are stored in {str(folder)}")
+        self.info_logger(f"Faces are stored in {str(folder)}")
 
         if isinstance(img, FileStorage):
-            logger.info(f"derive extension from file {img.name}")
+            self.info_logger("uploaded file")
+            self.info_logger(f"Look for extension in file name {img.name}")
             ext1 = img.name
             _, ext1 = os.path.splitext(img.filename)
             if ext1:
                 ext = ext1
             else:
-                logger.info(f"No extension is provided with uploaded file!")
+                self.info_logger(f"No extension is provided with uploaded file!")
 
         if ext.startswith("."):
             ext = ext[1:]
 
-        logger.info(f"file extension will be {ext}")
+        self.info_logger(f"file extension will be {ext}")
 
         file_name = f"{name}_1.{ext}"
         file_path = folder / f"{file_name}"
 
         if not file_path.exists():
-            logger.info(f"{file_name} is Not available")
+            self.info_logger(f"{file_name} is Not available")
             counter = 2
             while True:
                 file_name = f"{name}_{counter}.{ext}"
@@ -80,27 +92,31 @@ class FaceRecognizer:
                 if not file_path.exists():
                     break
                 counter += 1
-            logger.info(f"{file_name} is available")
+            self.info_logger(f"{file_name} is available")
         else:
-            logger.info(f"{file_name} is available")
+            self.info_logger(f"{file_name} is available")
 
-        logger.info(f"target file name is {str(file_path)}")
+        self.info_logger(f"target file name is {str(file_path)}")
+        self.info_logger(f"Saving...")
         if isinstance(img, Image.Image):
-            logger.info(f"img is a PIL Image, saving...")
             img.save(file_path)
         elif isinstance(img, np.ndarray):
-            logger.info(f"img is a CV2 Image, saving...")
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             Image.fromarray(img_rgb).save(file_path)
         elif isinstance(img, FileStorage):
-            logger.info("saving received file")
             img.save(file_path)
         else:
-            logger.info("img must be a PIL Image or NumPy array or a FileStorage")
+            self.info_logger("This should not have happened.")
             raise TypeError("img must be a PIL Image or NumPy array or a Path")
 
-        logger.info("file saved successfully")
+        self.info_logger("file saved successfully")
         return file_name
+
+    def remove_file(self, file_name: str):
+        folder = Path(self.face_dir)
+        file_path = folder / f"{file_name}"
+        if file_path.exists():
+            file_path.unlink()
 
     def register_face(
         self,
@@ -108,80 +124,84 @@ class FaceRecognizer:
         face: Union[np.ndarray, Image.Image, FileStorage],
         vector: Union[np.ndarray, FileStorage],
     ) -> RegisteredFace:
+        file_name = None
         try:
             # Create or retrive person
             person = self.RegisteredPerson.find_by_name(name=name)
 
             if not person:
-                logger.info(f"no person named {name} found. creating")
+                self.info_logger(f"No person named {name} found. creating")
                 person = self.RegisteredPerson.create(name)
                 if not person:
-                    logger.info(f"failed to get person with name: {name}")
+                    self.info_logger(f"Failed to get person with name: {name}")
                     return None
-                logger.info(
+                self.info_logger(
                     f"successfully created a person with id {person.id}, name {person.name}"
                 )
             else:
-                logger.info(f"person with name {name} found in db")
+                self.info_logger(f"person with name {name} found in db")
 
             if isinstance(vector, FileStorage):
-                logger.info(f"vector file {vector.name} is being loaded into np array")
+                self.info_logger(
+                    f"vector file {vector.name} is being loaded into np array"
+                )
                 vector = np.load(vector)
             elif not isinstance(vector, np.ndarray):
-                logger.info(f"vector must be a NumPy array or a FileStorage")
+                self.info_logger(f"vector must be a NumPy array or a FileStorage")
                 raise TypeError("vector must be a NumPy array or a path string")
 
             if len(vector) != 512:
-                logger.info(
+                self.info_logger(
                     f"expected 512 sized vector, found ${len(vector)} sized vectort"
                 )
                 raise TypeError(
                     f"vector must be a NumPy array of 512 elements, but vector size is {len(vector)}"
                 )
             else:
-                logger.info(f"valid 512 sized vector is provided")
+                self.info_logger(f"valid 512 sized vector is provided")
 
-            logger.info(f"Searching vector database for exact match. (> 0.99)")
+            self.info_logger(f"Searching vector database for exact match. (> 0.99)")
             found: list[FaceIdWithConfidence] = self.faceVectorStore.vector_search(
                 vector=vector
             )
             if found and len(found) > 0 and found[0].confidence > 0.99:
                 face = self.RegisteredFace.get_face(id=found[0].id)
-                logger.info(
+                self.info_logger(
                     "found exact match  in vector db, registration not required"
                 )
                 result = RegisteredFace(id=face.id, personName=face.person.name)
-                logger.info(f"returning {result.model_dump_json()}")
+                self.info_logger(f"returning {result.model_dump_json()}")
                 return result
             elif found and len(found) > 0:
-                logger.info(
+                self.info_logger(
                     f"found matching vectors with maximum confidence of {found[0].confidence}, but not exact match"
                 )
             else:
-                logger.info("no match found")
+                self.info_logger("no match found")
 
-            logger.info(f"proceeding to register")
+            self.info_logger(f"proceeding to register")
             file_name = self._save_file(name=person.name, img=face)
-            logger.info(f"face is saved with name {file_name}")
+            self.info_logger(f"face is saved with name {file_name}")
             face = self.RegisteredFace.create(person_id=person.id, path=file_name)
             if not face:
-                logger.warning(f"failed to get save face for identity {person.id}")
                 raise Exception("Failed to register face")
-            logger.info(f"Saving the vector into vector store")
+            self.info_logger(f"Saving the vector into vector store")
             self.faceVectorStore.add(id=face.id, vector=vector)
         except Exception as e:
-            logger.info("removing the stored file")
+            self.info_logger("removing the stored file")
             # REmove file here
-            logger.info(f"Exception while registerring face {e}")
-            logger.error(f"Exception while registerring face {e}")
+            if file_name:
+                self.remove_file(file_name=file_name)
+            self.info_logger(f"Exception while registerring face {e}")
+            self.error_logger(f"Exception while registerring face {e}")
             raise
 
-        logger.info(f"face is successfull registerred! {face}")
+        self.info_logger(f"face is successfull registerred! {face}")
 
         result = RegisteredFace(
             id=face.id, personName=face.person.name, personId=face.person.id
         )
-        logger.info(f"returning {result.model_dump_json()}")
+        self.info_logger(f"returning {result.model_dump_json()}")
         return result
 
     def detect_and_register_face(
@@ -191,7 +211,7 @@ class FaceRecognizer:
         POST /register/face
 
         """
-        logger.info(
+        self.info_logger(
             f'register_face: {f"id={person_id}" if person_id else f"name={person_name}"} -> {path}'
         )
         detector = DetectionModel()
@@ -413,5 +433,17 @@ class FaceRecognizer:
                     bbox=(x1, y1, x2, y2), landmarks=landmarks, image=identifier
                 )
             )
-            logger.info(f"face {index} is saved with identity {identifier}")
+            self.info_logger(f"face {index} is saved with identity {identifier}")
         return aligned_faces, None
+
+    def info_logger(self, msg: str):
+        msg = msg[0].upper() + msg[1:] if msg else msg
+        logger.info(msg)
+
+    def warning_logger(self, msg: str):
+        msg = msg[0].upper() + msg[1:] if msg else msg
+        logger.warning(msg)
+
+    def error_logger(self, msg: str):
+        msg = msg[0].upper() + msg[1:] if msg else msg
+        logger.error(msg)

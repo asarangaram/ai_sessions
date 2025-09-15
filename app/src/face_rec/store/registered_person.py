@@ -57,7 +57,7 @@ def person_db(db, dbModel):
         @classmethod
         def find_by_name(cls, name: int) -> Optional[Self]:
             session = cls._session()
-            return session.get(cls, name)
+            return session.query(cls).filter_by(name=name).first()
 
         # --- Create ---
         @classmethod
