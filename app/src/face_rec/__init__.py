@@ -27,6 +27,7 @@ def create_db(path, preserve_past: bool = True):
         String=sa.String,
         Boolean=sa.Boolean,
         ForeignKey=sa.ForeignKey,
+        Unicode=sa.Unicode,
     )
     if not preserve_past:
         metadata = sa.MetaData()

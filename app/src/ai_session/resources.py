@@ -28,16 +28,21 @@ def register_sessions_resources(*, bp: Blueprint, model: AISessionManager):
         @bp.response(201, UploadResponseSchema)
         def post(self, session_id):
             try:
+                logger.info(f"session id: {session_id}, upload request")
                 session: SessionState = model.get_session(session_id)
-                files = UploadFileSchema().load(request.files)
-                uploaded_file = files.get("media")
-                result = session.save_uploaded_image(uploaded_file)
-                logger.info(f"successfully uploaded {uploaded_file.filename} ")
-                return result
+                if session:
+                    files = UploadFileSchema().load(request.files)
+                    uploaded_file = files.get("media")
+                    logger.info(
+                        f"session id: {session_id}, upload request:  {uploaded_file.filename} "
+                    )
+                    result = session.save_uploaded_image(uploaded_file)
+                    logger.info(f"successfully uploaded {uploaded_file.filename} ")
+                    return result
             except Exception as e:
                 logger.exception(f" failed to upload {uploaded_file.filename} ")
                 logger.exception(f"{e}")
-            raise
+                raise
 
         @custom_error_handler
         @bp.response(200)

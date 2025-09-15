@@ -8,7 +8,7 @@ def person_db(db, dbModel):
     class RegisteredPersonInDB(dbModel):
         __tablename__ = "person"
         id = db.Column(db.Integer, primary_key=True)
-        name = db.Column(db.String, unique=True)
+        name = db.Column(db.Unicode, unique=True)
         key_face_id = db.Column(db.String(36), nullable=True)
         is_hidden = db.Column(db.Boolean, default=False, nullable=False)
         is_deleted = db.Column(db.Boolean, default=False, nullable=False)

@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
@@ -118,6 +119,12 @@ class FaceRecognizer:
         if file_path.exists():
             file_path.unlink()
 
+    def normalize_text(self, s: str) -> str:
+        s = s.lower()
+        s = re.sub(r"\s+", " ", s)
+        s = s.strip()
+        return s
+
     def register_face(
         self,
         name: str,
@@ -126,6 +133,7 @@ class FaceRecognizer:
     ) -> RegisteredFace:
         file_name = None
         try:
+            name = self.normalize_text(name)
             # Create or retrive person
             person = self.RegisteredPerson.find_by_name(name=name)
 
