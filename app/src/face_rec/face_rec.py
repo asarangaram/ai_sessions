@@ -177,7 +177,9 @@ class FaceRecognizer:
                 self.info_logger(
                     "found exact match  in vector db, registration not required"
                 )
-                result = RegisteredFace(id=face.id, personName=face.person.name)
+                result = RegisteredFace(
+                    id=face.id, personName=face.person.name, personId=face.person.id
+                )
                 self.info_logger(f"returning {result.model_dump_json()}")
                 return result
             elif found and len(found) > 0:
