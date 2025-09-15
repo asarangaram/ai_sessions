@@ -17,6 +17,10 @@ class FaceUploadSchema(Schema):
     vector = Upload(required=True)
 
 
+class VectorUploadSchema(Schema):
+    vector = Upload(required=True)
+
+
 class RegisteredPersonSchema(Schema):
     id = ma_fields.Int(dump_only=True)
     name = ma_fields.Str(dump_only=True)
@@ -40,11 +44,21 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
     class FaceRegisterPerson(MethodView):
         @custom_error_handler
         @bp.arguments(FaceUploadSchema, location="files")
-        @bp.response(201, RegisteredFaceSchema)
         def post(self, args, name):
             face = store.register_face(
                 name=name, face=args["face"], vector=args["vector"]
             )
+            return face.model_dump()
+
+    @bp.route("/search")
+    class FaceRegisterPerson(MethodView):
+        @custom_error_handler
+        @bp.arguments(VectorUploadSchema, location="files")
+        def post(
+            self,
+            args,
+        ):
+            face = store.search_face(vector=args["vector"])
             return face.model_dump()
 
     @bp.route("/<string:face_id>/reassign_to/<string:name>")

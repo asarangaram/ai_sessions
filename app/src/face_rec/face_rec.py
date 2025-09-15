@@ -10,7 +10,7 @@ from loguru import logger
 from PIL import Image
 from werkzeug.datastructures import FileStorage
 
-from .face import DetectedFace, Face, RegisteredFace, RegisteredPerson
+from .face import DetectedFace, Face, RecognizedFace, RegisteredFace, RegisteredPerson
 from .proc import DetectionModel, EmbeddingModel, align_and_crop
 from .store import FaceVectorStore, faces_db, person_db, store_version_db
 from .store.face_vector_store import FaceIdWithConfidence
@@ -197,6 +197,13 @@ class FaceRecognizer:
                 raise Exception("Failed to register face")
             self.info_logger(f"Saving the vector into vector store")
             self.faceVectorStore.add(id=face.id, vector=vector)
+            self.info_logger(f"face is successfull registerred! {face}")
+
+            result = RegisteredFace(
+                id=face.id, personName=face.person.name, personId=face.person.id
+            )
+            self.info_logger(f"returning {result.model_dump_json()}")
+            return result
         except Exception as e:
             self.info_logger("removing the stored file")
             # REmove file here
@@ -206,13 +213,62 @@ class FaceRecognizer:
             self.error_logger(f"Exception while registerring face {e}")
             raise
 
-        self.info_logger(f"face is successfull registerred! {face}")
+    def search_face(
+        self,
+        vector: Union[np.ndarray, FileStorage],
+        threshold: float = 0.3,
+        count: int = 2,
+    ) -> List[RecognizedFace]:
+        try:
+            if isinstance(vector, FileStorage):
+                self.info_logger(
+                    f"vector file {vector.name} is being loaded into np array"
+                )
+                vector = np.load(vector)
+            elif not isinstance(vector, np.ndarray):
+                self.info_logger(f"vector must be a NumPy array or a FileStorage")
+                raise TypeError("vector must be a NumPy array or a path string")
 
-        result = RegisteredFace(
-            id=face.id, personName=face.person.name, personId=face.person.id
-        )
-        self.info_logger(f"returning {result.model_dump_json()}")
-        return result
+            if len(vector) != 512:
+                self.info_logger(
+                    f"expected 512 sized vector, found ${len(vector)} sized vectort"
+                )
+                raise TypeError(
+                    f"vector must be a NumPy array of 512 elements, but vector size is {len(vector)}"
+                )
+            else:
+                self.info_logger(f"valid 512 sized vector is provided")
+
+            self.info_logger(f"Searching vector database for exact match. (> 0.99)")
+            results: list[FaceIdWithConfidence] = self.faceVectorStore.vector_search(
+                vector=vector, count=count, threshold=threshold
+            )
+            if results:
+                self.info_logger(
+                    f"found {len(results)} faces matching for the preference (count={count}, threshold={threshold} )"
+                )
+            faces = []
+            for result in results:
+                id = result.id
+                face = self.RegisteredFace.get_face(id=id)
+                if face:
+                    faces.append(
+                        RecognizedFace(
+                            id=id,
+                            personName=face.person.name,
+                            personId=face.person.id,
+                            confidence=result.confidence,
+                        )
+                    )
+            self.info_logger(
+                f"faces: {' '.join([face.model_dump_json() for face in faces])}"
+            )
+
+            return faces
+        except Exception as e:
+            self.info_logger(f"Exception while searching face {e}")
+            self.error_logger(f"Exception while searching face {e}")
+            raise
 
     def detect_and_register_face(
         self, path: str, person_id: int = None, person_name: str = None

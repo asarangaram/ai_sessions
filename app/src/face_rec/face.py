@@ -47,14 +47,11 @@ class UnknownFace(Face):
         self.status = RecognitionStatus.NOT_FOUND
 
 
-class RecognizedFace(Face):
+class RecognizedFace(BaseModel):
     id: str
     personId: int
     personName: str
     confidence: float
-
-    def __post_init__(self):
-        self.status = RecognitionStatus.FOUND
 
 
 class RegisteredPerson(BaseModel):
