@@ -10,7 +10,13 @@ from loguru import logger
 from PIL import Image
 from werkzeug.datastructures import FileStorage
 
-from .face import DetectedFace, Face, RecognizedFace, RegisteredFace, RegisteredPerson
+from .face import (
+    DetectedFace,
+    Face,
+    RecognizedPerson,
+    RegisteredFace,
+    RegisteredPerson,
+)
 from .proc import DetectionModel, EmbeddingModel, align_and_crop
 from .store import FaceVectorStore, faces_db, person_db, store_version_db
 from .store.face_vector_store import FaceIdWithConfidence
@@ -218,7 +224,7 @@ class FaceRecognizer:
         vector: Union[np.ndarray, FileStorage],
         threshold: float = 0.3,
         count: int = 2,
-    ) -> List[RecognizedFace]:
+    ) -> List[RecognizedPerson]:
         try:
             if isinstance(vector, FileStorage):
                 self.info_logger(
@@ -247,24 +253,24 @@ class FaceRecognizer:
                 self.info_logger(
                     f"found {len(results)} faces matching for the preference (count={count}, threshold={threshold} )"
                 )
-            faces = []
+            personMap = {}
             for result in results:
                 id = result.id
                 face = self.RegisteredFace.get_face(id=id)
                 if face:
-                    faces.append(
-                        RecognizedFace(
-                            id=id,
-                            personName=face.person.name,
-                            personId=face.person.id,
-                            confidence=result.confidence,
-                        )
-                    )
+                    if not face.person.name in personMap.keys():
+                        personMap[face.person.name] = result.confidence
+
+            persons = [
+                RecognizedPerson(name=name, confidence=confidence)
+                for name, confidence in personMap.items()
+            ]
+
             self.info_logger(
-                f"faces: {' '.join([face.model_dump_json() for face in faces])}"
+                f"persons: {' '.join([person.model_dump_json() for person in persons])}"
             )
 
-            return faces
+            return persons
         except Exception as e:
             self.info_logger(f"Exception while searching face {e}")
             self.error_logger(f"Exception while searching face {e}")
@@ -408,12 +414,19 @@ class FaceRecognizer:
             )
         return persons
 
-    def get_person(self, id: int) -> RegisteredPerson:
+    def get_person_by_name(self, name: str) -> Optional[RegisteredPerson]:
         """
         GET /person/{id}
         """
-        item = self.RegisteredPerson.get_person(id=id)
-        return RegisteredPerson(id=item.id, name=item.name, keyFaceId=item.key_face_id)
+        item = self.RegisteredPerson.find_by_name(name=name)
+        if item and item.is_deleted != True:
+            return RegisteredPerson(
+                id=item.id,
+                name=item.name,
+                keyFaceId=item.key_face_id if item.key_face_id else item.faces[0].id,
+                isHidden=1 if item.is_hidden else 0,
+            )
+        return None
 
     def get_face(self, id: int) -> str:
         """

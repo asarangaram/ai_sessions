@@ -51,15 +51,15 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
             return face.model_dump()
 
     @bp.route("/search")
-    class FaceRegisterPerson(MethodView):
+    class FaceSearchPerson(MethodView):
         @custom_error_handler
         @bp.arguments(VectorUploadSchema, location="files")
         def post(
             self,
             args,
         ):
-            face = store.search_face(vector=args["vector"])
-            return face.model_dump()
+            persons = store.search_face(vector=args["vector"])
+            return [person.model_dump() for person in persons]
 
     @bp.route("/<string:face_id>/reassign_to/<string:name>")
     class FaceReassignNew(MethodView):
@@ -101,13 +101,14 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
             persons = store.get_all_persons()
             return [person.model_dump() for person in persons]
 
-    @bp.route("/person/<int:id>")
+    @bp.route("/person/<string:name>")
     class Person(MethodView):
         @custom_error_handler
-        @bp.response(200, RegisteredPersonSchema)
-        def get(self, id):
-            person = store.get_person(id=id)
-            return person.model_dump()
+        def get(self, name):
+            person = store.get_person_by_name(name=name)
+            if person:
+                return person.model_dump()
+            raise FileNotFoundError  ## Recheck error
 
         @bp.arguments(UpdatedPersonSchema, location="form")
         @bp.response(200, RegisteredPersonSchema)

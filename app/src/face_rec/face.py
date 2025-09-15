@@ -47,16 +47,16 @@ class UnknownFace(Face):
         self.status = RecognitionStatus.NOT_FOUND
 
 
-class RecognizedFace(BaseModel):
-    id: str
-    personId: int
-    personName: str
+class RecognizedPerson(BaseModel):
+    name: str
     confidence: float
 
 
 class RegisteredPerson(BaseModel):
+    id: int
     name: str
-    keyFaceId: int
+    keyFaceId: str
+    isHidden: int
 
 
 class RegisteredFace(BaseModel):
