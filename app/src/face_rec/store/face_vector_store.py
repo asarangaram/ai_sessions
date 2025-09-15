@@ -1,8 +1,16 @@
+from typing import List
 import uuid
 
 import lancedb
 import numpy as np
 from lancedb.pydantic import LanceModel, Vector
+from loguru import logger
+from pydantic import BaseModel
+
+
+class FaceIdWithConfidence(BaseModel):
+    id: str
+    confidence: float
 
 
 class FaceRecognitionSchema(LanceModel):
@@ -49,9 +57,9 @@ class FaceVectorStore:
         threshold: float = 0.85,
         metric_type: str = "cosine",
         count: int = 1,
-    ) -> list[str, float]:
-        result = []
-        num_vectors = self.tbl.count()
+    ) -> list[FaceIdWithConfidence]:
+        result: List[FaceIdWithConfidence] = []
+        num_vectors = self.tbl.count_rows()
         if num_vectors == 0:
             return result
 
@@ -67,8 +75,11 @@ class FaceVectorStore:
             similarity_score = round(1 - face_found["_distance"], 2)
             if similarity_score >= threshold:
                 identity = face_found["id"]
-                result.append((identity, similarity_score))
+                result.append(
+                    FaceIdWithConfidence(id=identity, confidence=similarity_score)
+                )
 
+        logger.info(result)
         return result
 
 

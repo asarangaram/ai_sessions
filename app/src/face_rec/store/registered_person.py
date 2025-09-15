@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session, relationship
 def person_db(db, dbModel):
     class RegisteredPersonInDB(dbModel):
         __tablename__ = "person"
-        name = db.Column(db.String, primary_key=True)
+        id = db.Column(db.Integer, primary_key=True)
+        name = db.Column(db.String, unique=True)
         key_face_id = db.Column(db.String(36), nullable=True)
         is_hidden = db.Column(db.Boolean, default=False, nullable=False)
         is_deleted = db.Column(db.Boolean, default=False, nullable=False)
