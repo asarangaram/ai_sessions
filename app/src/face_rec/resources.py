@@ -36,18 +36,7 @@ class UpdatedPersonSchema(Schema):
 
 
 def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
-    @bp.route("/detect")
-    class Recognize(MethodView):
-        @custom_error_handler
-        def post(self, session_id):
-            raise Exception("Not implemented Yet")
-
-        @custom_error_handler
-        @bp.response(200)
-        def get(self, session_id):
-            return {"message": "Post the file to upload"}
-
-    @bp.route("/face/register/person/new/<name>")
+    @bp.route("/register_face/of/<string:name>")
     class FaceRegisterPerson(MethodView):
         @custom_error_handler
         @bp.arguments(FaceUploadSchema, location="files")
@@ -58,20 +47,11 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
             )
             return face.model_dump()
 
-    @bp.route("/face/reassign/<int:id>/new/<name>")
+    @bp.route("/<string:face_id>/reassign_to/<string:name>")
     class FaceReassignNew(MethodView):
         @custom_error_handler
         def put(self, face_id, new_person_name):
             face = store.update_face(face_id=face_id, new_person_name=new_person_name)
-            if not face:
-                raise FileNotFoundError
-            return face.model_dump()
-
-    @bp.route("/face/reassign/<int:id>/known/<known_id>")
-    class FaceReassignKnown(MethodView):
-        @custom_error_handler
-        def put(self, face_id, new_person_id):
-            face = store.update_face(face_id=face_id, new_person_id=new_person_id)
             if not face:
                 raise FileNotFoundError
             return face.model_dump()
