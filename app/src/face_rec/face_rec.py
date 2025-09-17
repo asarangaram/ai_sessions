@@ -136,7 +136,7 @@ class FaceRecognizer:
         name: str,
         face: Union[np.ndarray, Image.Image, FileStorage],
         vector: Union[np.ndarray, FileStorage],
-    ) -> RegisteredFace:
+    ) -> RegisteredPerson:
         file_name = None
         try:
             name = self.normalize_text(name)
@@ -183,8 +183,14 @@ class FaceRecognizer:
                 self.info_logger(
                     "found exact match  in vector db, registration not required"
                 )
-                result = RegisteredFace(
-                    id=face.id, personName=face.person.name, personId=face.person.id
+                person = face.person
+                result = RegisteredPerson(
+                    id=person.id,
+                    name=person.name,
+                    keyFaceId=(
+                        person.key_face_id if person.key_face_id else person.faces[0].id
+                    ),
+                    isHidden=person.is_hidden,
                 )
                 self.info_logger(f"returning {result.model_dump_json()}")
                 return result
@@ -205,8 +211,14 @@ class FaceRecognizer:
             self.faceVectorStore.add(id=face.id, vector=vector)
             self.info_logger(f"face is successfull registerred! {face}")
 
-            result = RegisteredFace(
-                id=face.id, personName=face.person.name, personId=face.person.id
+            person = face.person
+            result = RegisteredPerson(
+                id=person.id,
+                name=person.name,
+                keyFaceId=(
+                    person.key_face_id if person.key_face_id else person.faces[0].id
+                ),
+                isHidden=person.is_hidden,
             )
             self.info_logger(f"returning {result.model_dump_json()}")
             return result
@@ -278,7 +290,7 @@ class FaceRecognizer:
 
     def detect_and_register_face(
         self, path: str, person_id: int = None, person_name: str = None
-    ) -> Optional[RegisteredFace]:
+    ) -> Optional[RegisteredPerson]:
         """
         POST /register/face
 
@@ -333,7 +345,7 @@ class FaceRecognizer:
 
     def register_faces(
         self, faces: List[Tuple[Union[int, str], str]]
-    ) -> List[RegisteredFace]:
+    ) -> List[RegisteredPerson]:
         """
         Register multiple faces at once.
         - known_faces: map of existing person_id to list of face image files

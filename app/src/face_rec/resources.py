@@ -45,10 +45,10 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
         @custom_error_handler
         @bp.arguments(FaceUploadSchema, location="files")
         def post(self, args, name):
-            face = store.register_face(
+            person = store.register_face(
                 name=name, face=args["face"], vector=args["vector"]
             )
-            return face.model_dump()
+            return person.model_dump()
 
     @bp.route("/search")
     class FaceSearchPerson(MethodView):
