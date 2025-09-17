@@ -176,17 +176,23 @@ class AISessionManager:
                 )
                 return False
             self.is_hw_in_use = True
-
-        result, error = session.recognize(self.recogniser, identifier)
-        with self.resource_lock:
-            self.is_hw_in_use = False
-        if result:
+        try:
+            result, error = session.recognize(self.recogniser, identifier)
+            if result:
+                session.emit_result(
+                    {"identifier": identifier, "status": "success", **result}
+                )
+                return True
+            else:
+                session.emit_result(
+                    {"identifier": identifier, "status": "failed", "error": error}
+                )
+                return False
+        except Exception as e:
             session.emit_result(
-                {"identifier": identifier, "status": "success", **result}
-            )
-            return True
-        else:
-            session.emit_result(
-                {"identifier": identifier, "status": "failed", "error": error}
+                {"identifier": identifier, "status": "exception", "error": str(e)}
             )
             return False
+        finally:
+            with self.resource_lock:
+                self.is_hw_in_use = False
