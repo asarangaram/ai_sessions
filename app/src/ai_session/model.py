@@ -4,11 +4,8 @@ import threading
 import time
 from pathlib import Path
 
-import eventlet
 from flask_socketio import emit
-from loguru import logger
 from PIL import Image
-from werkzeug.utils import secure_filename
 
 from ..common import ConfigClass, TempFile
 from ..face_rec import FaceRecognizer, load

@@ -1,4 +1,3 @@
-import eventlet
 from flask import request, session
 from flask_socketio import SocketIO
 from loguru import logger

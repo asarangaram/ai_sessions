@@ -1,9 +1,13 @@
 import os
 
-import eventlet
+if os.getenv("PREFER_EVENTLET"):
+    import eventlet
 
-if not os.getenv("DEBUGPY_RUNNING"):
-    eventlet.monkey_patch()
+    if not os.getenv("DEBUGPY_RUNNING"):
+        eventlet.monkey_patch()
+        async_mode = ("eventlet",)
+    else:
+        async_mode = ("threading",)
 
 from flask import Flask
 from flask_socketio import SocketIO
@@ -15,7 +19,6 @@ from .main import register_main
 
 
 def app_factory(debug=False):
-    """Create an application."""
     app = Flask(__name__)
     app.debug = debug
     app.config["SECRET_KEY"] = ConfigClass.APP_SECRET
@@ -24,7 +27,7 @@ def app_factory(debug=False):
     socket.init_app(
         app,
         cors_allowed_origins="*",
-        async_mode="eventlet",
+        async_mode=async_mode,
     )
     register_main(app=app, socket=socket)
     register_chat_apis(app=app, socket=socket)
