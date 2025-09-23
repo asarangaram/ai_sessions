@@ -5,9 +5,9 @@ if os.getenv("PREFER_EVENTLET"):
 
     if not os.getenv("DEBUGPY_RUNNING"):
         eventlet.monkey_patch()
-        async_mode = ("eventlet",)
-    else:
-        async_mode = ("threading",)
+        async_mode = "eventlet"
+else:
+    async_mode = "threading"
 
 from flask import Flask
 from flask_socketio import SocketIO

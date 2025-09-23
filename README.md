@@ -2,7 +2,8 @@
 
 ## Start Server
 ```
-HOST_NAME=$(hostname) gunicorn -k eventlet -w 1 -b 0.0.0.0:5002 src:application
+PREFER_EVENTLET='1' HOST_NAME=$(hostname) gunicorn -k eventlet -w 1 -b 0.0.0.0:5002 src:application
+HOST_NAME=$(hostname) gunicorn -w 1 --threads 100 -b 0.0.0.0:5002 src:application
 ```
 
 ## Quick steps
