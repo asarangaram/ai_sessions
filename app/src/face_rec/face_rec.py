@@ -45,6 +45,8 @@ class FaceRecognizer:
         self.faceVectorStore = FaceVectorStore(
             vectordb, table_name=self.face_vector_table
         )
+        self.detector = DetectionModel()
+        self.embedding_model = EmbeddingModel()
 
     @classmethod
     def vector_tables(cls):
@@ -298,8 +300,8 @@ class FaceRecognizer:
         self.info_logger(
             f'register_face: {f"id={person_id}" if person_id else f"name={person_name}"} -> {path}'
         )
-        detector = DetectionModel()
-        detected_faces = detector.scan(path=path)
+
+        detected_faces = self.detector.scan(path=path)
 
         num_faces = len(detected_faces.results)
         if num_faces > 1:
@@ -317,8 +319,8 @@ class FaceRecognizer:
             detected_faces.image,
             [landmark["landmark"] for landmark in result["landmarks"]],
         )
-        embedding_model = EmbeddingModel()
-        face_embedding = embedding_model.extract_face_embedding(aligned_img)
+
+        face_embedding = self.embedding_model.extract_face_embedding(aligned_img)
 
         face = self.register_face(
             name=person_id if person_id else person_name,
@@ -355,10 +357,8 @@ class FaceRecognizer:
         identities = [t[0] for t in faces]
         image_files = [t[1] for t in faces]
 
-        detector = DetectionModel()
-        detected_faces_batch = detector.batch_scan(path=image_files)
+        detected_faces_batch = self.detector.batch_scan(path=image_files)
 
-        embedding_model = EmbeddingModel()
         embedding = []
         saved_faces = []
         for identity, detected_faces in zip(identities, detected_faces_batch):
@@ -380,7 +380,7 @@ class FaceRecognizer:
                 detected_faces.image,
                 [landmark["landmark"] for landmark in result["landmarks"]],
             )
-            face_embedding = embedding_model.extract_face_embedding(aligned_img)
+            face_embedding = self.embedding_model.extract_face_embedding(aligned_img)
             result = detected_faces.results[0]
             embedding.append((identity, aligned_img, face_embedding))
             face = self.register_face(
@@ -504,8 +504,8 @@ class FaceRecognizer:
     def detect_and_align_faces(
         self, path: str, on_get_face_identity: Callable[[int], Tuple[str, str]]
     ) -> List[Tuple[np.array, list, DetectedFace]]:
-        detector = DetectionModel()
-        detected_faces = detector.scan(path=path)
+
+        detected_faces = self.detector.scan(path=path)
 
         aligned_faces = []
         for index, face in enumerate(detected_faces.results):
@@ -515,8 +515,8 @@ class FaceRecognizer:
             aligned_face, _ = align_and_crop(detected_faces.image, landmarks)
             image_path, vector_path, identifier = on_get_face_identity(index)
             cv2.imwrite(str(image_path), aligned_face)
-            embedding_model = EmbeddingModel()
-            vector = embedding_model.extract_face_embedding(aligned_face)
+
+            vector = self.embedding_model.extract_face_embedding(aligned_face)
             np.save(vector_path, vector)
 
             aligned_faces.append(
