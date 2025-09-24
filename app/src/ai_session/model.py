@@ -9,6 +9,7 @@ from PIL import Image
 
 from ..common import ConfigClass, TempFile
 from ..face_rec import FaceRecognizer, load
+from loguru import logger
 
 
 class SessionState:
@@ -160,6 +161,7 @@ class AISessionManager:
     def recognize(self, sid, identifier) -> bool:
         session: SessionState = self._clients.get(sid, None)
         if not session:
+            logger.warning(f"Session {sid} doesn't exists, reconnect")
             raise Exception(f"Session {sid} doesn't exists, reconnect")
         session.emit_progress(f"Received Face Recognition request for {identifier}")
         with self.resource_lock:
@@ -173,23 +175,29 @@ class AISessionManager:
                 )
                 return False
             self.is_hw_in_use = True
+            logger.info(f"{identifier} acquired the resource")
+
         try:
             result, error = session.recognize(self.recogniser, identifier)
             if result:
+                logger.info(f"{identifier} dispatching result ")
                 session.emit_result(
                     {"identifier": identifier, "status": "success", **result}
                 )
                 return True
             else:
+                logger.info(f"{identifier} reporting error")
                 session.emit_result(
                     {"identifier": identifier, "status": "failed", "error": error}
                 )
                 return False
         except Exception as e:
+            logger.info(f"{identifier} reporting exception")
             session.emit_result(
                 {"identifier": identifier, "status": "exception", "error": str(e)}
             )
             return False
         finally:
+            logger.info(f"{identifier} release log")
             with self.resource_lock:
                 self.is_hw_in_use = False
