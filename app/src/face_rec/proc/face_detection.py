@@ -60,3 +60,7 @@ class EmbeddingModel(HostedModel):
         face_embedding = self.model(image).results[0]["data"][0]
         face_vector = np.array(face_embedding, dtype=np.float32)
         return face_vector
+
+
+detector = DetectionModel()
+embedding_model = EmbeddingModel()

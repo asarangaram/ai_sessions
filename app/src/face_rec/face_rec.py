@@ -28,7 +28,15 @@ class FaceRecognizer:
     person_table_name = "person"
 
     def __init__(
-        self, db, dbModel, vectordb, face_dir: str, is_interactive: bool = False
+        self,
+        *,
+        db,
+        dbModel,
+        vectordb,
+        face_dir: str,
+        is_interactive: bool = False,
+        detector: DetectionModel,
+        embedding_model: EmbeddingModel,
     ):
         self.db = db  # to debug
         self.dbModel = dbModel  # to debug
@@ -45,8 +53,8 @@ class FaceRecognizer:
         self.faceVectorStore = FaceVectorStore(
             vectordb, table_name=self.face_vector_table
         )
-        self.detector = DetectionModel()
-        self.embedding_model = EmbeddingModel()
+        self.detector = detector
+        self.embedding_model = embedding_model
 
     @classmethod
     def vector_tables(cls):

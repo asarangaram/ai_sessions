@@ -11,6 +11,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from .face_rec import FaceRecognizer
 from .resources import register_face_rec_resources
+from .proc.face_detection import detector, embedding_model
 
 
 def create_db(path, preserve_past: bool = True):
@@ -75,6 +76,8 @@ def load(store_dir, preserve_past: bool = True):
         vectordb=vectordb,
         face_dir=face_dir,
         is_interactive=False,
+        detector=detector,
+        embedding_model=embedding_model,
     )
     Base.metadata.create_all(db.engine)
     recogniser.StoreVersion.track_table()
