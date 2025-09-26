@@ -1,3 +1,5 @@
+import os
+import psutil
 from flask import request, session
 from flask_socketio import SocketIO
 from loguru import logger
@@ -6,6 +8,9 @@ from .model import AISessionManager
 
 
 def register_ai_session_events(*, socket: SocketIO, model: AISessionManager):
+    def getMemory():
+        return psutil.Process(os.getpid()).memory_info().rss / 1024**2, "MB"
+
     @socket.on("connect")
     def handle_connect():
         sid = request.sid
@@ -21,6 +26,7 @@ def register_ai_session_events(*, socket: SocketIO, model: AISessionManager):
             logger.info(f"Recognize {msg}: succeeded")
         else:
             logger.info(f"Recognize {msg}: failed")
+        logger.info(f"Memory: {getMemory()}")
 
     @socket.on("disconnect")
     def handle_disconnect():
