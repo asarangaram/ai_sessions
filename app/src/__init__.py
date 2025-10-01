@@ -1,13 +1,17 @@
-import os
+### Digurum library is not working correctly with eventlet or gevent.
+### found async_mode=threading and gunicorn gthread
+### works stable!
 
-if os.getenv("PREFER_EVENTLET"):
+"""if os.getenv("PREFER_EVENTLET"):
     import eventlet
 
     if not os.getenv("DEBUGPY_RUNNING"):
         eventlet.monkey_patch()
         async_mode = "eventlet"
 else:
-    async_mode = "threading"
+    async_mode = "threading" """
+
+async_mode = "threading"
 
 from flask import Flask
 from flask_socketio import SocketIO
