@@ -192,12 +192,12 @@ class AISessionManager:
                 )
                 return False
         except Exception as e:
-            logger.info(f"{identifier} reporting exception")
+            logger.info(f"{identifier} reporting exception {e}")
             session.emit_result(
                 {"identifier": identifier, "status": "exception", "error": str(e)}
             )
             return False
         finally:
-            logger.info(f"{identifier} release log")
+            logger.info(f"{identifier} release lock")
             with self.resource_lock:
                 self.is_hw_in_use = False
