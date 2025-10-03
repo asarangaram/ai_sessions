@@ -2,8 +2,11 @@
 
 ## Start Server
 ```
-PREFER_EVENTLET='1' HOST_NAME=$(hostname) gunicorn -k eventlet -w 1 -b 0.0.0.0:5002 src:application
-HOST_NAME=$(hostname) gunicorn -w 1 --threads 100 -b 0.0.0.0:5002 src:application
+# Don't go well with digerum library
+# PREFER_EVENTLET='1' HOST_NAME=$(hostname) gunicorn -k eventlet -w 1 -b 0.0.0.0:5002 src:application
+# HOST_NAME=$(hostname) gunicorn -w 1 --threads 100 -b 0.0.0.0:5002 src:application
+# only the following command is 
+HOST_NAME=$(hostname) gunicorn -w 1 -k gthread --threads 4 -b 0.0.0.0:5002 src:application
 ```
 
 ## Quick steps
