@@ -426,13 +426,31 @@ class FaceRecognizer:
         """
         GET /persons
         """
-        all = self.RegisteredPerson.get_persons()
         persons = []
-        for item in all:
-            persons.append(
-                RegisteredPerson(id=item.id, name=item.name, keyFaceId=item.key_face_id)
-            )
-        return persons
+        try:
+            all = self.RegisteredPerson.find_all()
+
+            for item in all:
+                if len(item.faces) > 0:
+                    self.info_logger(f"adding {item.name} ")
+                    self.info_logger(f"{item.to_json()}")
+                    persons.append(
+                        RegisteredPerson(
+                            id=item.id,
+                            name=item.name,
+                            keyFaceId=item.key_face_id,
+                            isHidden=1 if item.is_hidden else 0,
+                            faces=[face.id for face in item.faces],
+                        )
+                    )
+                else:
+                    self.info_logger(f"skipping {item.name} as no face is associated")
+                    self.info_logger(f"{item.to_json()}")
+            return persons
+
+        except Exception as e:
+            self.error_logger(f"Error occured {e}")
+            raise
 
     def get_person_by_name(self, name: str) -> Optional[RegisteredPerson]:
         """
@@ -454,8 +472,11 @@ class FaceRecognizer:
         - returns the image
         """
         face = self.RegisteredFace.get_face(id=id)
-        file_name = f"{face.person.name}_{face.person.id}"
-        return Path.joinpath(self.face_dir, f"{file_name}.png")
+        self.info_logger(f"got face {face.to_json()}")
+        file_name = f"{face.path}"
+        path = Path(self.face_dir) / file_name
+        self.info_logger(f"file path is {path}")
+        return path
 
     def get_person_by_face(self, id: int) -> RegisteredPerson:
         """

@@ -55,8 +55,9 @@ class RecognizedPerson(BaseModel):
 class RegisteredPerson(BaseModel):
     id: int
     name: str
-    keyFaceId: str
+    keyFaceId: Optional[str]
     isHidden: int
+    faces: List[str]
 
 
 class RegisteredFace(BaseModel):

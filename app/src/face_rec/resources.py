@@ -4,6 +4,7 @@ from flask import send_file
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from flask_smorest.fields import Upload
+from loguru import logger
 from marshmallow import Schema
 from marshmallow import fields as ma_fields
 
@@ -19,12 +20,6 @@ class FaceUploadSchema(Schema):
 
 class VectorUploadSchema(Schema):
     vector = Upload(required=True)
-
-
-class RegisteredPersonSchema(Schema):
-    id = ma_fields.Int(dump_only=True)
-    name = ma_fields.Str(dump_only=True)
-    keyFaceId = ma_fields.Int(dump_only=True)
 
 
 class RegisteredFaceSchema(Schema):
@@ -73,9 +68,10 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
     @bp.route("/face/<id>")
     class Face(MethodView):
         @custom_error_handler
-        @bp.response(200, RegisteredFaceSchema)
         def get(self, id):
+            logger.info(f"/face/{id}")
             face = store.get_face(id=id)
+            logger.info(f"face path is {face}")
             if not face.exists():
                 raise FileNotFoundError
             return send_file(str(face), as_attachment=False)
@@ -88,7 +84,6 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
     @bp.route("/face/<id>/person")
     class FacePerson(MethodView):
         @custom_error_handler
-        @bp.response(200, RegisteredPersonSchema)
         def get(self, id):
             person = store.get_person_by_face(id=id)
             return person.model_dump()
@@ -96,9 +91,11 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
     @bp.route("/persons")
     class Persons(MethodView):
         @custom_error_handler
-        @bp.response(200, RegisteredPersonSchema(many=True))
         def get(self):
+
             persons = store.get_all_persons()
+            logger.info("successfully retrieved persons")
+            logger.info(persons)
             return [person.model_dump() for person in persons]
 
     @bp.route("/person/<string:name>")
@@ -111,7 +108,6 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
             raise FileNotFoundError  ## Recheck error
 
         @bp.arguments(UpdatedPersonSchema, location="form")
-        @bp.response(200, RegisteredPersonSchema)
         def put(self, args, id):
             person = store.update_person(**args)
             return person.model_dump()

@@ -134,13 +134,12 @@ def person_db(db, dbModel):
                 raise ValueError(f"Failed to hard delete person: {str(e)}")
 
         def to_json(self):
-            print(self.faces)
+
             return {
                 "name": self.name,
-                "key_face_id": (
-                    self.key_face_id if self.key_face_id else self.faces[0].id
-                ),
+                "key_face_id": self.key_face_id,
                 "is_hidden": self.is_hidden,
+                "faces": self.faces,
             }
 
     return RegisteredPersonInDB
