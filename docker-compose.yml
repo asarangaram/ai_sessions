@@ -10,13 +10,20 @@ services:
       - web
 
   web:
-    build: .
+    image: ai_sessions-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./app:/app
+      - /media/anandas/colan_storage/docker/ai_session:/data
+      
     command: >
       gunicorn -k eventlet
-               -w 1 -b 0.0.0.0:5000 chat:application
-    volumes:
-      - ./:/app
-    expose:
-      - "5000"
+               -w 1 -b 0.0.0.0:5000 src:application
+    ports:
+      - "5000:5000"
+    environment:
+      - HOST_NAME=${HOSTNAME}
 
 

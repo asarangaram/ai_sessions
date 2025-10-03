@@ -1,0 +1,23 @@
+from flask import Flask
+from flask_smorest import Blueprint
+from flask_socketio import SocketIO
+
+from ..face_rec.resources import register_face_rec_resources
+from .events import register_ai_session_events
+from .model import AISessionManager
+from .resources import register_sessions_resources
+
+
+def register_ai_session_handler(*, app: Flask, socket: SocketIO):
+    model = AISessionManager()
+    bp = Blueprint("aisession", __name__, url_prefix="/sessions")
+
+    register_sessions_resources(bp=bp, model=model)
+    register_ai_session_events(socket=socket, model=model)
+    app.register_blueprint(bp)
+
+    store_bp = Blueprint("face_store", __name__, url_prefix="/store")
+    register_face_rec_resources(bp=store_bp, store=model.recogniser)
+    app.register_blueprint(store_bp)
+
+    pass

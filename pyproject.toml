@@ -1,12 +1,18 @@
 [project]
-name = "flask-socketio-chat"
+name = "ai-session"
 version = "1.0"
 dependencies = [
     "flask",
     "flask-socketio",
     "flask-wtf",
     "eventlet",
-    "gunicorn"
+    "gunicorn",
+    "flask_smorest",
+    "lancedb",
+    "sqlalchemy",
+    "degirum",
+    'marshmallow',
+    'dotenv',
 ]
 
 [project.optional-dependencies]

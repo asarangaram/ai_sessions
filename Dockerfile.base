@@ -1,0 +1,26 @@
+FROM python:3.11-slim AS base
+
+# Create base dirs
+RUN mkdir -p /base /app /env /data
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Keep pyproject.toml & requirements inside base image
+WORKDIR /base
+COPY pyproject.toml /base/
+
+# Upgrade pip & install pip-tools
+RUN pip install --upgrade pip --root-user-action=ignore
+RUN pip install pip-tools --root-user-action=ignore
+
+# Compile & install requirements
+RUN pip-compile --strip-extras /base/pyproject.toml -o /base/requirements.txt
+RUN pip install -r /base/requirements.txt --root-user-action=ignore
+
+WORKDIR /app
+
+EXPOSE 5000

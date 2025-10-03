@@ -1,24 +1,22 @@
-FROM python:3.11-slim
+FROM ai_sessions-base AS app
 
-COPY ./ /app
+# Workdir is already /app
 WORKDIR /app
+COPY ./env/.env.docker /env/.env
 
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    python3-dev \
-    libffi-dev \
-    libssl-dev \
+    libgl1 \
+    libglx-mesa0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libfontconfig1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --upgrade pip
-RUN pip install pip-tools
-RUN pip-compile --strip-extras ./pyproject.toml    
 
-RUN pip install --no-cache-dir -r requirements.txt
+# don’t copy — to rely on docker-compose bind mount
+COPY ./app /app
 
-EXPOSE 5000
 
-# override in docker-compose.yml
-#CMD ["gunicorn", "-k", "geventwebsocket.gunicorn.workers.GeventWebSocketWorker", "-w", "2", "-b", "0.0.0.0:5000", "chat:application"]
-CMD ["python", "chat/__init__.py"]
-
+CMD ["python", "src/run.py"]
