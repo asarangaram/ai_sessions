@@ -92,20 +92,40 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
     class Persons(MethodView):
         @custom_error_handler
         def get(self):
-
-            persons = store.get_all_persons()
-            logger.info("successfully retrieved persons")
-            logger.info(persons)
-            return [person.model_dump() for person in persons]
+            try:
+                logger.info("Persons: query received")
+                persons = store.get_all_persons()
+                logger.info(f"Persons: {len(persons)} items found")
+                logger.info(persons)
+                if len(persons) > 0:
+                    result = [person.model_dump() for person in persons]
+                    logger.info(f"Persons: returning {result}")
+                    return result
+                else:
+                    result = []
+                    logger.warning("Persons: Returns Empty")
+                    return result
+            except Exception as e:
+                logger.error(f"Exception. {e}")
+                raise
 
     @bp.route("/person/<string:name>")
     class Person(MethodView):
         @custom_error_handler
         def get(self, name):
-            person = store.get_person_by_name(name=name)
-            if person:
-                return person.model_dump()
-            raise FileNotFoundError  ## Recheck error
+            try:
+                logger.info(f"Person {name}: query received")
+                person = store.get_person_by_name(name=name)
+                if person:
+                    result = person.model_dump()
+                    logger.info(f"Person {name}: returning {result}")
+                    return result
+                else:
+                    logger.warning(f"Person {name}: not found")
+                    raise FileNotFoundError  ## Recheck error
+            except Exception as e:
+                logger.error(f"Exception. {e}")
+                raise
 
         @bp.arguments(UpdatedPersonSchema, location="form")
         def put(self, args, id):

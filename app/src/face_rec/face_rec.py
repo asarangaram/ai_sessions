@@ -427,30 +427,25 @@ class FaceRecognizer:
         GET /persons
         """
         persons = []
-        try:
-            all = self.RegisteredPerson.find_all()
+        all = self.RegisteredPerson.find_all()
 
-            for item in all:
-                if len(item.faces) > 0:
-                    self.info_logger(f"adding {item.name} ")
-                    self.info_logger(f"{item.to_json()}")
-                    persons.append(
-                        RegisteredPerson(
-                            id=item.id,
-                            name=item.name,
-                            keyFaceId=item.key_face_id,
-                            isHidden=1 if item.is_hidden else 0,
-                            faces=[face.id for face in item.faces],
-                        )
+        for item in all:
+            if len(item.faces) > 0:
+                self.info_logger(f"adding {item.name} ")
+                self.info_logger(f"{item.to_json()}")
+                persons.append(
+                    RegisteredPerson(
+                        id=item.id,
+                        name=item.name,
+                        keyFaceId=item.key_face_id,
+                        isHidden=1 if item.is_hidden else 0,
+                        faces=[face.id for face in item.faces],
                     )
-                else:
-                    self.info_logger(f"skipping {item.name} as no face is associated")
-                    self.info_logger(f"{item.to_json()}")
-            return persons
-
-        except Exception as e:
-            self.error_logger(f"Error occured {e}")
-            raise
+                )
+            else:
+                self.info_logger(f"skipping {item.name} as no face is associated")
+                self.info_logger(f"{item.to_json()}")
+        return persons
 
     def get_person_by_name(self, name: str) -> Optional[RegisteredPerson]:
         """
@@ -461,8 +456,9 @@ class FaceRecognizer:
             return RegisteredPerson(
                 id=item.id,
                 name=item.name,
-                keyFaceId=item.key_face_id if item.key_face_id else item.faces[0].id,
+                keyFaceId=item.key_face_id,
                 isHidden=1 if item.is_hidden else 0,
+                faces=[face.id for face in item.faces],
             )
         return None
 
