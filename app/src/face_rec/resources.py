@@ -49,7 +49,7 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
             self,
             args,
         ):
-            persons = store.search_face(vector=args["vector"], face=args["vector"])
+            persons = store.search_face(vector=args["vector"], face=args["face"])
             return [person.model_dump() for person in persons]
 
     @bp.route("/<string:face_id>/reassign_to/<string:name>")
