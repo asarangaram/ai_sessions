@@ -154,6 +154,7 @@ class FaceRecognizer:
 
     def register_face(
         self,
+        *,
         name: Optional[str],
         face: Union[np.ndarray, Image.Image, FileStorage],
         vector: Union[np.ndarray, FileStorage],
@@ -216,11 +217,11 @@ class FaceRecognizer:
                 vector=vector
             )
             if found and len(found) > 0 and found[0].confidence > 0.99:
-                face = self.RegisteredFace.get_face(id=found[0].id)
+                registeredFace = self.RegisteredFace.get_face(id=found[0].id)
                 self.format_message(
                     "found exact match  in vector db, registration not required"
                 )
-                person = face.person
+                person = registeredFace.person
                 result = RegisteredPerson(
                     id=person.id,
                     name=person.name,
@@ -228,7 +229,7 @@ class FaceRecognizer:
                         person.key_face_id if person.key_face_id else person.faces[0].id
                     ),
                     isHidden=person.is_hidden,
-                    faces=[face.id for face in person.faces],
+                    faces=[face_.id for face_ in person.faces],
                 )
                 logger.info(
                     self.format_message(f"returning {result.model_dump_json()}")
@@ -241,17 +242,23 @@ class FaceRecognizer:
             else:
                 logger.info(self.format_message("no match found"))
 
-            logger.info(self.format_message(f"proceeding to register"))
+            logger.info(self.format_message(f"proceeding to register id={person.id}"))
             file_name = self._save_file(id=person.id, img=face)
             logger.info(self.format_message(f"face is saved with name {file_name}"))
-            face = self.RegisteredFace.create(person_id=person.id, path=file_name)
-            if not face:
+            registeredFace = self.RegisteredFace.create(
+                person_id=person.id, path=file_name
+            )
+            if not registeredFace:
                 raise Exception("Failed to register face")
             logger.info(self.format_message(f"Saving the vector into vector store"))
-            self.faceVectorStore.add(id=face.id, vector=vector)
-            logger.info(self.format_message(f"face is successfull registerred! {face}"))
+            self.faceVectorStore.add(id=registeredFace.id, vector=vector)
+            logger.info(
+                self.format_message(
+                    f"face is successfull registerred! {registeredFace}"
+                )
+            )
 
-            person = face.person
+            person = registeredFace.person
             result = RegisteredPerson(
                 id=person.id,
                 name=person.name,
@@ -259,7 +266,7 @@ class FaceRecognizer:
                     person.key_face_id if person.key_face_id else person.faces[0].id
                 ),
                 isHidden=person.is_hidden,
-                faces=[face.id for face in person.faces],
+                faces=[face_.id for face_ in person.faces],
             )
             logger.info(self.format_message(f"returning {result.model_dump_json()}"))
             return result
@@ -411,27 +418,31 @@ class FaceRecognizer:
 
         face_embedding = self.embedding_model.extract_face_embedding(aligned_img)
 
-        face = self.register_face(
+        registeredFace = self.register_face(
             name=person_id if person_id else person_name,
             face=aligned_img,
             vector=face_embedding,
         )
 
         if self.is_interactive:
-            self.show_face(face)
+            self.show_face(registeredFace)
 
-        return face
+        return registeredFace
 
     def register_faces_no_batch(self, faces: List[Tuple[Union[int, str], str]]):
         registerd_faces = []
         for identity, path in faces:
-            face = None
+            registeredFace = None
             if isinstance(identity, int):
-                face = self.detect_and_register_face(path=path, person_id=identity)
+                registeredFace = self.detect_and_register_face(
+                    path=path, person_id=identity
+                )
             elif isinstance(identity, str):
-                face = self.detect_and_register_face(path=path, person_name=identity)
-            if face:
-                registerd_faces.append(face)
+                registeredFace = self.detect_and_register_face(
+                    path=path, person_name=identity
+                )
+            if registeredFace:
+                registerd_faces.append(registeredFace)
         return registerd_faces
 
     def register_faces(
@@ -472,14 +483,14 @@ class FaceRecognizer:
             face_embedding = self.embedding_model.extract_face_embedding(aligned_img)
             result = detected_faces.results[0]
             embedding.append((identity, aligned_img, face_embedding))
-            face = self.register_face(
+            registeredFace = self.register_face(
                 name=identity,
                 face=aligned_img,
                 vector=face_embedding,
             )
 
-            if face:
-                saved_faces.append(face)
+            if registeredFace:
+                saved_faces.append(registeredFace)
 
         return saved_faces
 
@@ -487,10 +498,10 @@ class FaceRecognizer:
         """
         DELETE /faces/{id}
         """
-        face = self.RegisteredFace.get_face(id=id)
+        registeredFace = self.RegisteredFace.get_face(id=id)
 
-        face.delete()
-        person = self.RegisteredPerson.get_person(face.person_id)
+        registeredFace.delete()
+        person = self.RegisteredPerson.get_person(registeredFace.person_id)
         if person.faces < 1:
             person.delete()
         return True
@@ -520,7 +531,7 @@ class FaceRecognizer:
                         name=item.name,
                         keyFaceId=item.key_face_id,
                         isHidden=1 if item.is_hidden else 0,
-                        faces=[face.id for face in item.faces],
+                        faces=[face_.id for face_ in item.faces],
                     )
                 )
             else:
@@ -543,7 +554,7 @@ class FaceRecognizer:
                 name=item.name,
                 keyFaceId=item.key_face_id,
                 isHidden=1 if item.is_hidden else 0,
-                faces=[face.id for face in item.faces],
+                faces=[face_.id for face_ in item.faces],
             )
         return None
 
@@ -558,7 +569,7 @@ class FaceRecognizer:
                 name=item.name,
                 keyFaceId=item.key_face_id,
                 isHidden=1 if item.is_hidden else 0,
-                faces=[face.id for face in item.faces],
+                faces=[face_.id for face_ in item.faces],
             )
         return None
 
@@ -567,9 +578,9 @@ class FaceRecognizer:
         GET /face/{id}
         - returns the image
         """
-        face = self.RegisteredFace.get_face(id=id)
-        logger.info(self.format_message(f"got face {face.to_json()}"))
-        file_name = f"{face.path}"
+        registeredFace = self.RegisteredFace.get_face(id=id)
+        logger.info(self.format_message(f"got face {registeredFace.to_json()}"))
+        file_name = f"{registeredFace.path}"
         path = Path(self.face_dir) / file_name
         logger.info(self.format_message(f"file path is {path}"))
         return path
@@ -579,8 +590,8 @@ class FaceRecognizer:
         GET /face/{id}/person
         - returns the image
         """
-        face = self.RegisteredFace.get_face(id=id)
-        item = face.person
+        registeredFace = self.RegisteredFace.get_face(id=id)
+        item = registeredFace.person
 
         return RegisteredPerson(id=item.id, name=item.name, keyFaceId=item.key_face_id)
 
@@ -633,12 +644,12 @@ class FaceRecognizer:
         detected_faces = self.detector.scan(path=path)
 
         aligned_faces = []
-        for index, face in enumerate(detected_faces.results):
-            x1, y1, x2, y2 = map(int, face["bbox"])
+        for index_, face_ in enumerate(detected_faces.results):
+            x1, y1, x2, y2 = map(int, face_["bbox"])
             # cropped_face = detected_faces.image[y1:y2, x1:x2]
-            landmarks = [landmark["landmark"] for landmark in face["landmarks"]]
+            landmarks = [landmark["landmark"] for landmark in face_["landmarks"]]
             aligned_face, _ = align_and_crop(detected_faces.image, landmarks)
-            image_path, vector_path, identifier = on_get_face_identity(index)
+            image_path, vector_path, identifier = on_get_face_identity(index_)
             cv2.imwrite(str(image_path), aligned_face)
 
             vector = self.embedding_model.extract_face_embedding(aligned_face)
@@ -650,7 +661,9 @@ class FaceRecognizer:
                 )
             )
             logger.info(
-                self.format_message(f"face {index} is saved with identity {identifier}")
+                self.format_message(
+                    f"face {index_} is saved with identity {identifier}"
+                )
             )
         return aligned_faces, None
 
