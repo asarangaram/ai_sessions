@@ -48,15 +48,15 @@ class UnknownFace(Face):
 
 
 class RecognizedPerson(BaseModel):
-    name: str
+    id: int
     confidence: float
 
 
 class RegisteredPerson(BaseModel):
     id: int
-    name: str
-    keyFaceId: Optional[str]
     isHidden: int
+    name: Optional[str]
+    keyFaceId: Optional[str]
     faces: List[str]
 
 

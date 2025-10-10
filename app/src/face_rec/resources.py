@@ -18,10 +18,6 @@ class FaceUploadSchema(Schema):
     vector = Upload(required=True)
 
 
-class VectorUploadSchema(Schema):
-    vector = Upload(required=True)
-
-
 class RegisteredFaceSchema(Schema):
     id = ma_fields.Str(dump_only=True)
     personId = ma_fields.Int(dump_only=True)
@@ -48,12 +44,12 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
     @bp.route("/search")
     class FaceSearchPerson(MethodView):
         @custom_error_handler
-        @bp.arguments(VectorUploadSchema, location="files")
+        @bp.arguments(FaceUploadSchema, location="files")
         def post(
             self,
             args,
         ):
-            persons = store.search_face(vector=args["vector"])
+            persons = store.search_face(vector=args["vector"], face=args["vector"])
             return [person.model_dump() for person in persons]
 
     @bp.route("/<string:face_id>/reassign_to/<string:name>")
@@ -109,19 +105,19 @@ def register_face_rec_resources(*, bp: Blueprint, store: FaceRecognizer):
                 logger.error(f"Exception. {e}")
                 raise
 
-    @bp.route("/person/<string:name>")
+    @bp.route("/person/<int:id>")
     class Person(MethodView):
         @custom_error_handler
-        def get(self, name):
+        def get(self, id):
             try:
-                logger.info(f"Person {name}: query received")
-                person = store.get_person_by_name(name=name)
+                logger.info(f"Person {id}: query received")
+                person = store.get_person_by_id(id=id)
                 if person:
                     result = person.model_dump()
-                    logger.info(f"Person {name}: returning {result}")
+                    logger.info(f"Person {id}: returning {result}")
                     return result
                 else:
-                    logger.warning(f"Person {name}: not found")
+                    logger.warning(f"Person {id}: not found")
                     raise FileNotFoundError  ## Recheck error
             except Exception as e:
                 logger.error(f"Exception. {e}")

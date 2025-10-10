@@ -55,15 +55,21 @@ def person_db(db, dbModel):
             return query.all()
 
         @classmethod
-        def find_by_name(cls, name: int) -> Optional[Self]:
+        def find_by_name(cls, name: str) -> Optional[Self]:
             session = cls._session()
             return session.query(cls).filter_by(name=name).first()
+
+        @classmethod
+        def find_by_id(cls, id: int) -> Optional[Self]:
+            session = cls._session()
+            return session.query(cls).filter_by(id=id).first()
 
         # --- Create ---
         @classmethod
         def create(
             cls,
-            name: str,
+            *,
+            name: Optional[str],
             is_hidden: bool = False,
             key_face_id: Optional[str] = None,
         ) -> Self:
